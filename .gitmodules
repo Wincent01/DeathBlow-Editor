@@ -1,0 +1,8 @@
+[submodule "InfectedRose"]
+	path = Assets/ThirdParty/InfectedRose
+	url = https://github.com/Wincent01/InfectedRose.git
+	branch = unity
+[submodule "RakDotNet.IO"]
+	path = Assets/ThirdParty/RakDotNet.IO
+	url = https://github.com/Wincent01/RakDotNet.IO.git
+	branch = unity
