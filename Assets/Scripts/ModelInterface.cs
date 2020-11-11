@@ -48,7 +48,7 @@ public class ModelInterface : EditorWindow
             Model = EditorUtility.OpenFilePanelWithFilters(
                 "Select Gamebyro model...",
                 selected ? Path.GetDirectoryName(Model) : "",
-                new[] {"Gamebyro", "nif"}
+                new[] {"Gamebyro (*.nif)", "nif"}
             );
         }
 
