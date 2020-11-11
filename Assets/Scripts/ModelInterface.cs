@@ -16,6 +16,8 @@ public class ModelInterface : EditorWindow
     
     public Color NoticeColor { get; set; }
     
+    public Material Material { get; set; }
+    
     [MenuItem("Death Blow/Model Interface")]
     public static void Initialize()
     {
@@ -57,6 +59,18 @@ public class ModelInterface : EditorWindow
             return;
         }
 
+        EditorGUILayout.BeginHorizontal();
+        
+        GUILayout.Label("Material");
+        
+        Material = (Material) EditorGUILayout.ObjectField(
+            Material,
+            typeof(Material),
+            true
+        );
+        
+        EditorGUILayout.EndHorizontal();
+        
         EditorGUILayout.BeginHorizontal();
         
         GUILayout.Label("Working GameObject");
@@ -115,9 +129,22 @@ public class ModelInterface : EditorWindow
             
             return;
         }
+
+        ConstructModel(nif);
         
         NoticeColor = Color.green;
         Notice = "Successfully imported model";
+    }
+
+    public void ConstructModel(NiFile file)
+    {
+        var constructor = new ModelConstructor();
+
+        constructor.Name = Path.GetFileNameWithoutExtension(Model);
+        constructor.File = file;
+        constructor.Material = Material;
+        
+        constructor.Construct();
     }
     
     private void Export()
