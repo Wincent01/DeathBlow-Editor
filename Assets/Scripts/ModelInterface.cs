@@ -8,30 +8,32 @@ using UnityEngine;
 
 public class ModelInterface : EditorWindow
 {
-    public string Error { get; set; }
+    public string Notice { get; set; }
     
     public string Model { get; set; }
     
     public GameObject Instance { get; set; }
     
+    public Color NoticeColor { get; set; }
+    
     [MenuItem("Death Blow/Model Interface")]
     public static void Initialize()
     {
-        var window = GetWindow<ModelInterface>();
+        var window = GetWindow<ModelInterface>("Model Interface");
         
         window.Show();
     }
 
     private void OnGUI()
     {
-        if (!string.IsNullOrWhiteSpace(Error))
+        if (!string.IsNullOrWhiteSpace(Notice))
         {
             var style = new GUIStyle(EditorStyles.textField);
-            style.normal.textColor = Color.red;
+            style.normal.textColor = NoticeColor;
 
-            if (GUILayout.Button($"{Error}!", style))
+            if (GUILayout.Button($"{Notice}!", style))
             {
-                Error = "";
+                Notice = "";
             }
         }
 
@@ -88,7 +90,8 @@ public class ModelInterface : EditorWindow
     {
         if (!File.Exists(Model))
         {
-            Error = "Failed to find working file";
+            NoticeColor = Color.red;
+            Notice = "Failed to find working file";
             
             return;
         }
@@ -105,12 +108,16 @@ public class ModelInterface : EditorWindow
         {
             nif.ReadBlocks(reader);
         }
-        catch (NotImplementedException e)
+        catch (Exception e)
         {
-            Error = e.Message;
+            NoticeColor = Color.red;
+            Notice = e.Message;
             
             return;
         }
+        
+        NoticeColor = Color.green;
+        Notice = "Successfully imported model";
     }
     
     private void Export()
