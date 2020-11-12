@@ -144,8 +144,17 @@ public class ModelInterface : EditorWindow
         constructor.Name = Path.GetFileNameWithoutExtension(Model);
         constructor.File = file;
         constructor.Material = Material;
-        
-        constructor.Construct();
+
+        try
+        {
+            constructor.Construct();
+        }
+        catch (Exception e)
+        {
+            NoticeColor = Color.red;
+            Notice = e.Message;
+            throw;
+        }
     }
     
     private void Export()

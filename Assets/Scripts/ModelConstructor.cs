@@ -1,33 +1,45 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using InfectedRose.Nif;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using UVector3 = UnityEngine.Vector3;
 using UVector4 = UnityEngine.Vector4;
 
 public class ModelConstructor
 {
     public Material Material { get; set; }
-    
+
     public NiFile File { get; set; }
-    
+
     public string Name { get; set; }
-    
+
     public string Path { get; set; }
-    
+
+    public Dictionary<NiAVObject, Transform> Nodes { get; set; } = new Dictionary<NiAVObject, Transform>();
+
+    public List<(GameObject parent, NiSkinInstance skinInstance)> Skinned { get; set; } =
+        new List<(GameObject parent, NiSkinInstance skinInstance)>();
+
     public GameObject Construct()
     {
         var root = new GameObject(Name);
-        
+
         foreach (var block in File.Blocks)
         {
             if (block is NiNode node)
             {
                 BuildHierarchy(node, root);
-                
+
                 break;
             }
+        }
+
+        foreach (var (a, b) in Skinned)
+        {
+            BuildRig(a, b);
         }
 
         return root;
@@ -58,11 +70,11 @@ public class ModelConstructor
     public GameObject SpawnAvObject(NiAVObject avObject, GameObject parent)
     {
         var name = avObject.Name.Get(File);
-        
+
         var instance = new GameObject(name);
 
         var position = avObject.Translation;
-        
+
         instance.transform.SetParent(parent.transform);
         instance.transform.localPosition = new UVector3(position.x, position.y, position.z);
         instance.transform.localScale = UVector3.one * avObject.Scale;
@@ -82,11 +94,16 @@ public class ModelConstructor
             case NiLODNode lodGroup:
                 BuildLOD(lodGroup, instance);
                 break;
+            case NiAmbientLight ambientLight:
+                BuildAmbientLight(ambientLight, parent);
+                break;
             case NiNode _:
                 break;
             default:
                 throw new NotImplementedException($"Node type {avObject.GetType().Name} is not implemented");
         }
+
+        Nodes[avObject] = instance.transform;
 
         BuildProperties(avObject, parent);
 
@@ -98,7 +115,7 @@ public class ModelConstructor
         foreach (var ptr in avObject.Properties)
         {
             var property = ptr.Get(File);
-            
+
             switch (property)
             {
                 case NiTexturingProperty texturingProperty:
@@ -116,29 +133,37 @@ public class ModelConstructor
         {
             throw new NotImplementedException("Invalid NiTriShape data type");
         }
-        
+
         var mesh = new Mesh();
 
         mesh.name = shape.Name.Get(File);
-        
-        mesh.vertices = data.HasVertices ? data.Vertices.Select(
-            v => v.ToUVector()
-            ).ToArray() : null;
-        
-        mesh.triangles = data.HasTriangles ? data.Triangles.SelectMany(
-            t =>  new int[]{t.v1, t.v2, t.v3}
-            ).ToArray() : new int[0];
-        
-        mesh.normals = data.HasNormals ? data.Normals.Select(
-            v => v.ToUVector()
-            ).ToArray() : null;
-        
-        mesh.colors = data.HasVertexColors ? data.VertexColors.Select(
-            c => new Color(c.r, c.g, c.b, c.a)
-            ).ToArray() : null;
+
+        mesh.vertices = data.HasVertices
+            ? data.Vertices.Select(
+                v => v.ToUVector()
+            ).ToArray()
+            : null;
+
+        mesh.triangles = data.HasTriangles
+            ? data.Triangles.SelectMany(
+                t => new int[] {t.v1, t.v2, t.v3}
+            ).ToArray()
+            : new int[0];
+
+        mesh.normals = data.HasNormals
+            ? data.Normals.Select(
+                v => v.ToUVector()
+            ).ToArray()
+            : null;
+
+        mesh.colors = data.HasVertexColors
+            ? data.VertexColors.Select(
+                c => new Color(c.r, c.g, c.b, c.a)
+            ).ToArray()
+            : null;
 
         mesh.tangents = data.Tangents?.Select(t => (UVector4) t.ToUVector()).ToArray();
-        
+
         mesh.bounds = new Bounds(data.Center.ToUVector(), UVector3.one * data.Radius);
 
         for (var i = 0; i < data.UVSets.GetLength(0); i++)
@@ -148,7 +173,7 @@ public class ModelConstructor
             for (var j = 0; j < data.UVSets.GetLength(1); j++)
             {
                 var texCoord = data.UVSets[i, j];
-                
+
                 channel[j] = new Vector2(texCoord.u, texCoord.v);
             }
 
@@ -160,12 +185,19 @@ public class ModelConstructor
         var renderer = parent.AddOrGetComponent<MeshRenderer>();
 
         RegisterRenderer(renderer);
-        
+
         renderer.sharedMaterial = Material;
 
         filter.mesh = mesh;
+
+        var skinned = shape.SkinInstance.Get(File);
+
+        if (skinned != null)
+        {
+            Skinned.Add((parent, skinned));
+        }
     }
-    
+
     public void BuildTriStrips(NiTriStrips shape, GameObject parent)
     {
         var geometry = shape.Data.Get(File);
@@ -182,7 +214,7 @@ public class ModelConstructor
             var index = 1;
 
             var flip = false;
-            
+
             while (index + 1 < point.Length)
             {
                 var tris = new List<int>
@@ -196,7 +228,7 @@ public class ModelConstructor
                 {
                     tris.Reverse();
                 }
-                
+
                 triangles.AddRange(tris);
 
                 index++;
@@ -204,35 +236,33 @@ public class ModelConstructor
                 flip = !flip;
             }
         }
-        
+
         var mesh = new Mesh();
 
         mesh.name = shape.Name.Get(File);
-        
-        mesh.vertices = data.HasVertices ? data.Vertices.Select(
-            v => v.ToUVector()
-        ).ToArray() : null;
-        
-        mesh.triangles = triangles.ToArray();
-        
-        /*
-        mesh.triangles = data.HasTriangles ? data.Triangles.SelectMany(
-            t =>  new int[]{t.v1, t.v2, t.v3}
-        ).ToArray() : new int[0];
-        */
-        
-        mesh.normals = data.HasNormals ? data.Normals.Select(
-            v => v.ToUVector()
-        ).ToArray() : null;
-        
-        mesh.colors = data.HasVertexColors ? data.VertexColors.Select(
-            c => new Color(c.r, c.g, c.b, c.a)
-        ).ToArray() : null;
 
-        //mesh.SetIndices(data.Points.SelectMany(p => p.Select(t => (int) t)).ToArray(), MeshTopology.LineStrip, 0);
-        
+        mesh.vertices = data.HasVertices
+            ? data.Vertices.Select(
+                v => v.ToUVector()
+            ).ToArray()
+            : null;
+
+        mesh.triangles = triangles.ToArray();
+
+        mesh.normals = data.HasNormals
+            ? data.Normals.Select(
+                v => v.ToUVector()
+            ).ToArray()
+            : null;
+
+        mesh.colors = data.HasVertexColors
+            ? data.VertexColors.Select(
+                c => new Color(c.r, c.g, c.b, c.a)
+            ).ToArray()
+            : null;
+
         mesh.tangents = data.Tangents?.Select(t => (UVector4) t.ToUVector()).ToArray();
-        
+
         mesh.bounds = new Bounds(data.Center.ToUVector(), UVector3.one * data.Radius);
 
         for (var i = 0; i < data.UVSets.GetLength(0); i++)
@@ -242,7 +272,7 @@ public class ModelConstructor
             for (var j = 0; j < data.UVSets.GetLength(1); j++)
             {
                 var texCoord = data.UVSets[i, j];
-                
+
                 channel[j] = new Vector2(texCoord.u, texCoord.v);
             }
 
@@ -254,7 +284,7 @@ public class ModelConstructor
         var renderer = parent.AddOrGetComponent<MeshRenderer>();
 
         RegisterRenderer(renderer);
-        
+
         renderer.sharedMaterial = Material;
 
         filter.mesh = mesh;
@@ -265,7 +295,7 @@ public class ModelConstructor
         var data = node.LODLevelData.Get(File);
 
         var lod = parent.AddOrGetComponent<LODGroup>();
-        
+
         switch (data)
         {
             case NiRangeLODData rangeLODData:
@@ -278,13 +308,15 @@ public class ModelConstructor
         }
     }
 
-    public void RegisterRenderer(MeshRenderer renderer)
+    public void RegisterRenderer(Renderer renderer)
     {
         LODGroup lod = null;
 
-        var parent = renderer.transform.parent;
+        var transform = renderer.transform;
+        
+        var parent = transform.parent;
 
-        var origin = parent;
+        var origin = transform;
 
         while (parent != null && lod == null)
         {
@@ -294,9 +326,9 @@ public class ModelConstructor
             {
                 break;
             }
-            
+
             origin = parent;
-            
+
             parent = parent.parent;
         }
 
@@ -309,15 +341,18 @@ public class ModelConstructor
 
         var index = origin.GetSiblingIndex();
 
+        if (index >= lods.Length)
+        {
+            return;
+        }
+        
         var level = lods[index];
 
-        var renderers = level.renderers;
+        var renderers = level.renderers.Where(r => r != null).ToList();
 
-        Array.Resize(ref renderers, renderers.Length + 1);
+        renderers.Add(renderer);
 
-        renderers[renderers.Length - 1] = renderer;
-
-        level.renderers = renderers;
+        level.renderers = renderers.ToArray();
 
         lods[index] = level;
 
@@ -331,7 +366,7 @@ public class ModelConstructor
         if (property.HasBaseTexture)
         {
             var baseTexture = property.BaseTexture;
-            
+
             var source = baseTexture.Source.Get(File);
 
             if (source.UseExternal != 0)
@@ -356,21 +391,120 @@ public class ModelConstructor
 
                 texture.name = source.Name.Get(File);
 
-                var material = new Material(Material.shader)
+                var material = new Material(Shader.Find("Standard"))
                 {
                     name = texture.name
                 };
 
-                renderer.sharedMaterial = material;
+                material.SetTextureScale(Shader.PropertyToID("_MainTex"), new Vector2(1, -1));
+                renderer.material = material;
             }
         }
     }
-    
+
+    public void BuildRig(GameObject parent, NiSkinInstance skinInstance)
+    {
+        var mesh = parent.GetComponent<MeshFilter>().sharedMesh;
+
+        var partitions = skinInstance.SkinPartition.Get(File);
+
+        var oldRenderer = parent.GetComponent<MeshRenderer>();
+        var mat = oldRenderer.sharedMaterial;
+        Object.DestroyImmediate(oldRenderer);
+
+        var renderer = parent.AddComponent<SkinnedMeshRenderer>();
+        renderer.sharedMaterial = mat;
+        renderer.sharedMesh = mesh;
+        renderer.rootBone = Nodes[skinInstance.SkeletonRoot.Get(File)];
+
+        var boneWeights = new BoneWeight[mesh.vertices.Length];
+        
+        RegisterRenderer(renderer);
+
+        foreach (var partition in partitions.SkinPartitionBlocks)
+        {
+            for (var i = 0; i < partition.VertexMap.Length; i++)
+            {
+                var index = partition.VertexMap[i];
+                var weight = new BoneWeight();
+
+                for (var j = 0; j < partition.NumWeightsPerVertex; j++)
+                {
+                    var value = partition.BoneIndices[i, j];
+
+                    switch (j)
+                    {
+                        case 0:
+                            weight.boneIndex0 = value;
+                            break;
+                        case 1:
+                            weight.boneIndex1 = value;
+                            break;
+                        case 2:
+                            weight.boneIndex2 = value;
+                            break;
+                        case 3:
+                            weight.boneIndex3 = value;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    var vertexWeight = partition.VertexWeights[i, j];
+                    switch (j)
+                    {
+                        case 0:
+                            weight.weight0 = vertexWeight;
+                            break;
+                        case 1:
+                            weight.weight1 = vertexWeight;
+                            break;
+                        case 2:
+                            weight.weight2 = vertexWeight;
+                            break;
+                        case 3:
+                            weight.weight3 = vertexWeight;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                boneWeights[index] = weight;
+            }
+        }
+
+        mesh.boneWeights = boneWeights;
+
+        var bones = new Transform[skinInstance.NumBones];
+        var poses = new Matrix4x4[skinInstance.NumBones];
+
+        for (var index = 0; index < skinInstance.NumBones; index++)
+        {
+            var boneData = skinInstance.Bones[index].Get(File);
+            var unityObject = Nodes[boneData].transform;
+            bones[index] = unityObject;
+            poses[index] = unityObject.worldToLocalMatrix * renderer.rootBone.localToWorldMatrix;
+        }
+
+        mesh.bindposes = poses;
+        renderer.bones = bones;
+    }
+
+    public void BuildAmbientLight(NiAmbientLight info, GameObject parent)
+    {
+        var light = parent.AddOrGetComponent<Light>();
+
+        var color = info.AmbientColor;
+        
+        light.color = new Color(color.r, color.g, color.b);
+        light.type = LightType.Directional;
+    }
+
     public void BuildCamera(NiCamera info, GameObject parent)
     {
         var camera = parent.AddOrGetComponent<Camera>();
 
         camera.rect = new Rect(info.ViewportRight, info.ViewportRight, info.FrustumLeft, info.ViewportBottom);
     }
-    
 }
