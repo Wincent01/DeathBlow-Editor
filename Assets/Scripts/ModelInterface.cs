@@ -140,6 +140,7 @@ public class ModelInterface : EditorWindow
     {
         var constructor = new ModelConstructor();
 
+        constructor.Path = Path.GetDirectoryName(Model);
         constructor.Name = Path.GetFileNameWithoutExtension(Model);
         constructor.File = file;
         constructor.Material = Material;

@@ -38,4 +38,16 @@ public static class NiExtensions
 
         return angles * 180;
     }
+
+    public static T AddOrGetComponent<T>(this GameObject @this) where T : Component
+    {
+        var component = @this.GetComponent<T>();
+
+        if (component == null)
+        {
+            component = @this.AddComponent<T>();
+        }
+
+        return component;
+    }
 }
