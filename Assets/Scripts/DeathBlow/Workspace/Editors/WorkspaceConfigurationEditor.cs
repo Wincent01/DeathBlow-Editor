@@ -83,6 +83,7 @@ namespace DeathBlow.Workspace.Editors
             
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_vertexMaterial"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_normalMaterial"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_terrainMaterial"));
 
             serializedObject.ApplyModifiedProperties();
         }

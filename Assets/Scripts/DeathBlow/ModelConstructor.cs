@@ -431,7 +431,18 @@ namespace DeathBlow
 
                 if (source.UseExternal != 0)
                 {
-                    var contents = ResourceUtilities.ReadFrom(NifPath, source.FileName.Get(File));
+                    byte[] contents;
+                    
+                    try
+                    {
+                        contents = ResourceUtilities.ReadFrom(NifPath, source.FileName.Get(File));
+                    }
+                    catch (Exception e)
+                    { 
+                        Debug.LogError(e);
+                        
+                        return;
+                    }
 
                     Texture texture;
 

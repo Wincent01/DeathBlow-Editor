@@ -59,7 +59,13 @@ namespace DeathBlow
 
             if (GUILayout.Button("Import"))
             {
-                Import();
+                Instance = Import(Lot, out var error);
+                
+                if (Instance == null)
+                {
+                    Notice = error;
+                    NoticeColor = Color.red;
+                }
             }
 
             if (GUILayout.Button("Export"))
@@ -70,16 +76,17 @@ namespace DeathBlow
             EditorGUILayout.EndHorizontal();
         }
 
-        public void Import()
+        public static GameObject Import(int lot, out string error)
         {
-            var template = WorkspaceControl.Database.LoadObject(Lot);
+            error = "";
+            
+            var template = WorkspaceControl.Database.LoadObject(lot);
 
             if (template == null)
             {
-                Notice = $"Failed to find object with template {Lot}";
-                NoticeColor = Color.red;
+                error = $"Failed to find object with template {lot}";
                 
-                return;
+                return null;
             }
 
             var templateName = template.Row.Value<string>("name");
@@ -96,17 +103,18 @@ namespace DeathBlow
             {
                 if (!WorkspaceControl.ComponentRegistry.TryGetValue(component.Id, out var type))
                 {
-                    Notice = $"Failed to find game component type with id {component.Id}";
-                    NoticeColor = Color.red;
+                    error = $"Failed to find game component type with id {component.Id}";
                 
-                    return;
+                    DestroyImmediate(instance);
+                    
+                    return null;
                 }
                 
                 var componentInstance = (GameComponent) instance.AddComponent(type);
 
                 var componentAttribute = type.GetCustomAttribute<GameComponentAttribute>();
                 
-                if (componentAttribute == null) return;
+                if (componentAttribute == null) return null;
 
                 var table = WorkspaceControl.Database[componentAttribute.Table];
 
@@ -141,6 +149,8 @@ namespace DeathBlow
             {
                 gameComponent.OnLoad();
             }
+
+            return instance;
         }
 
         public void Export()

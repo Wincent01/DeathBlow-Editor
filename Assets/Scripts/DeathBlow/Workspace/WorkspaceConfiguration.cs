@@ -21,6 +21,9 @@ namespace DeathBlow.Workspace
         private Material _normalMaterial;
 
         [SerializeField]
+        private Material _terrainMaterial;
+        
+        [SerializeField]
         private string _assetPath;
         
         [SerializeField]
@@ -58,7 +61,13 @@ namespace DeathBlow.Workspace
             get => _normalMaterial;
             set => _normalMaterial = value;
         }
-
+        
+        public Material TerrainMaterial
+        {
+            get => _terrainMaterial;
+            set => _terrainMaterial = value;
+        }
+        
         public string AssetPath
         {
             get => _assetPath;
