@@ -125,7 +125,7 @@ namespace DeathBlow.Components.Game
 
                 if (Path.GetExtension(_renderAsset) != ".nif") return;
                 
-                using var steam = Utilities.OpenAssetStreamRead(_renderAsset);
+                using var steam = Utilities.OpenAssetStreamRead(_renderAsset.ToLower());
                 
                 if (steam == null) throw new FileNotFoundException($"{_renderAsset}");
                 
