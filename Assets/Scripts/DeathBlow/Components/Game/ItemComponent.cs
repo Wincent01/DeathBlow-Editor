@@ -6,8 +6,6 @@ namespace DeathBlow.Components.Game
     [GameComponent(ComponentId.ItemComponent, "ItemComponent")]
     public class ItemComponent : GameComponent
     {
-        [SerializeField] [LoadField("id")] public int _id;
-
         [SerializeField] [LoadField("equipLocation")]
         public string _equipLocation;
 
