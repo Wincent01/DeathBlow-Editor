@@ -12,8 +12,8 @@ namespace DeathBlow.Components.Game
         {
             base.OnInspectorGUI();
             
-            AssetProperty("Server Script", "_serverScript");
-            AssetProperty("Client Script", "_clientScript");
+            AssetProperty("Server Script", "_serverScript", settings: AssetPropertySettings.Edit);
+            AssetProperty("Client Script", "_clientScript", settings: AssetPropertySettings.Edit);
         }
     }
     
@@ -30,6 +30,26 @@ namespace DeathBlow.Components.Game
         {
             _serverScript = Utilities.HostPath(_serverScript);
             _clientScript = Utilities.HostPath(_clientScript);
+        }
+
+        public override void OnDetailGUI(ObjectDetails details)
+        {
+            base.OnDetailGUI(details);
+
+            var entry = details.GetEntry("custom_script_server");
+
+            var value = entry == null ? "" : entry.Value;
+
+            value = Utilities.AssetProperty("Custom Script Server", value, settings: AssetPropertySettings.Edit);
+
+            if (entry == null && !string.IsNullOrWhiteSpace(value))
+            {
+                entry = details.CreateEntry("custom_script_server", ObjectDataType.UTF16, value, true);
+            }
+            else if (entry != null)
+            {
+                entry.Value = value;
+            }
         }
     }
 }

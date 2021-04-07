@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using DeathBlow.Components;
+using DeathBlow.Components.Editors;
+using UnityEditor;
 using UnityEngine;
 
 namespace DeathBlow
@@ -61,7 +63,102 @@ namespace DeathBlow
             return File.OpenWrite(path);
         }
 
+        public static void OpenWithDefaultProgram(string path)
+        {
+            path = path.Replace('/', Path.DirectorySeparatorChar);
+            path = path.Replace('\\', Path.DirectorySeparatorChar);
+            System.Diagnostics.Process fileopener = new System.Diagnostics.Process();
+            fileopener.StartInfo.FileName = "explorer";
+            fileopener.StartInfo.Arguments = "\"" + path + "\"";
+            fileopener.Start();
+
+            Debug.Log(fileopener.StartInfo.FileName + " " + fileopener.StartInfo.Arguments);
+        }
+
         public static string HostPath(string path) => path == null ? "" : path.Replace("\\\\", "\\").Replace('\\', '/');
+
+        public static string AssetProperty(string fieldName, string value, string relativeTo = "", AssetPropertySettings settings = AssetPropertySettings.Default)
+        {
+            GUILayout.Space(5);
+
+            GUILayout.Label(fieldName);
+
+            var assetName = value;
+
+            var selected = !string.IsNullOrWhiteSpace(assetName);
+
+            assetName = assetName.Replace('\\', '/');
+
+            var normalizedFile = assetName.ToLower();
+
+            var fullPath = Path.Combine(ResourceUtilities.SearchRoot, relativeTo, assetName);
+            var normalizedFullPath = Path.Combine(ResourceUtilities.SearchRoot, relativeTo, normalizedFile);
+
+            if (GUILayout.Button(assetName))
+            {
+                var source = Path.GetDirectoryName(fullPath);
+                Debug.Log(source);
+                assetName = EditorUtility.OpenFilePanelWithFilters(
+                                "Select asset...",
+                                selected ? source : ResourceUtilities.SearchRoot,
+                                new string[0]
+                );
+
+                if (!string.IsNullOrWhiteSpace(assetName))
+                {
+                    assetName = Utilities.GetRelativeAssetPath(assetName, relativeTo);
+
+                    assetName = Utilities.HostPath(assetName);
+
+                    value = assetName;
+                }
+            }
+
+            if (File.Exists(normalizedFullPath) && (settings & AssetPropertySettings.Edit) == AssetPropertySettings.Edit)
+            {
+                GUILayout.Space(1);
+
+                if (GUILayout.Button("Edit with default editor"))
+                {
+                    Utilities.OpenWithDefaultProgram(normalizedFullPath);
+                }
+            }
+
+            GUILayout.Space(5);
+
+            return value;
+        }
+
+        public static System.Numerics.Vector3 ToNative(Vector3 value) => new System.Numerics.Vector3(value.x, value.y, value.z);
+
+        public static System.Numerics.Quaternion ToNative(Quaternion value) => new System.Numerics.Quaternion(value.x, value.y, value.z, value.w);
+
+        public static Vector3 ToUnity(System.Numerics.Vector3 value) => new Vector3(value.X, value.Y, value.Z);
+
+        public static Quaternion ToUnity(System.Numerics.Quaternion value) => new Quaternion(value.X, value.Y, value.Z, value.W);
+
+        public static void GizmosDrawString(string text, Vector3 worldPos, Color? colour = null)
+        {
+            Handles.BeginGUI();
+
+            var restoreColor = GUI.color;
+
+            if (colour.HasValue) GUI.color = colour.Value;
+            var view = SceneView.currentDrawingSceneView;
+            Vector3 screenPos = view.camera.WorldToScreenPoint(worldPos);
+
+            if (screenPos.y < 0 || screenPos.y > Screen.height || screenPos.x < 0 || screenPos.x > Screen.width || screenPos.z < 0)
+            {
+                GUI.color = restoreColor;
+                Handles.EndGUI();
+                return;
+            }
+
+            Vector2 size = GUI.skin.label.CalcSize(new GUIContent(text));
+            GUI.Label(new Rect(screenPos.x - (size.x / 2), -screenPos.y + view.position.height + 4, size.x, size.y), text);
+            GUI.color = restoreColor;
+            Handles.EndGUI();
+        }
 
         /*
         public static string GetWorkspaceAssetPath(string assetFolder, string relativeTo)

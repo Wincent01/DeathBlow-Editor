@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using DeathBlow.Components;
 using DeathBlow.Components.Game;
@@ -79,6 +80,23 @@ namespace DeathBlow
         public static GameObject Import(int lot, out string error)
         {
             error = "";
+
+            Directory.CreateDirectory(WorkspaceControl.CurrentWorkspace.AssetObjectsPath);
+
+            var prefabPath = $"{WorkspaceControl.CurrentWorkspace.AssetObjectsPath}/{lot}.prefab";
+
+            Debug.Log(prefabPath);
+
+            var existing = (GameObject) AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject));
+
+            GameObject instance;
+
+            if (existing != null)
+            {
+                instance = (GameObject) PrefabUtility.InstantiatePrefab(existing);
+
+                return instance;
+            }
             
             var template = WorkspaceControl.Database.LoadObject(lot);
 
@@ -91,7 +109,7 @@ namespace DeathBlow
 
             var templateName = template.Row.Value<string>("name");
             
-            var instance = new GameObject(templateName);
+            instance = new GameObject(templateName);
 
             var templateComponent = instance.AddComponent<GameTemplate>();
 
@@ -104,10 +122,14 @@ namespace DeathBlow
                 if (!WorkspaceControl.ComponentRegistry.TryGetValue(component.Id, out var type))
                 {
                     error = $"Failed to find game component type with id {component.Id}";
-                
-                    DestroyImmediate(instance);
-                    
-                    return null;
+
+                    Debug.LogError(error);
+
+                    //DestroyImmediate(instance);
+
+                    //return null;
+
+                    continue;
                 }
                 
                 var componentInstance = (GameComponent) instance.AddComponent(type);
@@ -136,8 +158,6 @@ namespace DeathBlow
                             if (fieldValue.Type == DataType.Nothing) continue;
 
                             field.SetValue(componentInstance, fieldValue.Value);
-
-                            Debug.Log($"{loadAttribute.Name} = {row[loadAttribute.Name].Value}");
                         }
                     }
                 }
@@ -149,6 +169,10 @@ namespace DeathBlow
             {
                 gameComponent.OnLoad();
             }
+
+            prefabPath = AssetDatabase.GenerateUniqueAssetPath(prefabPath);
+
+            PrefabUtility.SaveAsPrefabAssetAndConnect(instance, prefabPath, InteractionMode.AutomatedAction);
 
             return instance;
         }

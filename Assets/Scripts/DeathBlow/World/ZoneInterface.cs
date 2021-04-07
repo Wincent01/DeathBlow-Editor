@@ -68,10 +68,15 @@ namespace DeathBlow.World
             }
 
             EditorGUILayout.EndHorizontal();
-            
-            if (!selected) return;
-            
+
             GUILayout.Label("Actions");
+
+            if (GUILayout.Button("New"))
+            {
+                Instance = New();
+            }
+
+            if (!selected) return;
 
             EditorGUILayout.BeginHorizontal();
 
@@ -88,6 +93,37 @@ namespace DeathBlow.World
             EditorGUILayout.EndHorizontal();
         }
 
+        public static GameObject New()
+        {
+            var zoneInstance = new GameObject($"New Zone");
+
+            var spawnPoint = new GameObject("Zone Spawnpoint");
+
+            spawnPoint.transform.parent = zoneInstance.transform;
+
+            var zoneDetails = zoneInstance.AddOrGetComponent<ZoneDetails>();
+
+            zoneDetails.ZoneName = "New Zone";
+            
+            zoneDetails.ZoneId = 5000;
+            
+            zoneDetails.SpawnPoint = spawnPoint.transform;
+
+            var sceneInstance = new GameObject($"Global Scene");
+
+            sceneInstance.transform.parent = zoneInstance.transform;
+
+            var sceneDetails = sceneInstance.AddOrGetComponent<SceneDetails>();
+
+            sceneDetails.SceneName = "Global Scene";
+
+            sceneDetails.SceneLayer = 0;
+
+            sceneDetails.SkyBox = "";
+
+            return zoneInstance;
+        }
+
         public static GameObject Import(string workingFile)
         {
             const float scale = 3.125f;
@@ -101,9 +137,24 @@ namespace DeathBlow.World
             
             var zoneInstance = new GameObject($"Zone {Path.GetFileName(workingFile)}");
 
+            var zoneDetails = zoneInstance.AddOrGetComponent<ZoneDetails>();
+
+            zoneDetails.ZoneName = Path.GetFileName(workingFile);
+
+            zoneDetails.ZoneId = zone.WorldId;
+
+            var spawnPoint = new GameObject("Zone Spawnpoint");
+
+            spawnPoint.transform.parent = zoneInstance.transform;
+
+            spawnPoint.transform.position = new Vector3(zone.SpawnPoint.X, zone.SpawnPoint.Y, zone.SpawnPoint.Z);
+            spawnPoint.transform.rotation = new Quaternion(zone.SpawnRotation.X, zone.SpawnRotation.Y, zone.SpawnRotation.Z, zone.SpawnRotation.W);
+
+            zoneDetails.SpawnPoint = spawnPoint.transform;
+
             var sourceDir = Path.GetDirectoryName(workingFile) ?? WorkspaceControl.CurrentWorkspace.AssetPath;
             
-            var terrain =  TerrainInterface.Import(Path.Combine(
+            var terrain = TerrainInterface.Import(Path.Combine(
                             sourceDir,
                             zone.TerrainFileName)
             );
@@ -116,6 +167,8 @@ namespace DeathBlow.World
                 
                 var sceneInstance = new GameObject($"Scene {sceneInfo.SceneName} ({sceneInfo.SceneId}, {sceneInfo.LayerId})");
 
+                var sceneDetails = sceneInstance.AddOrGetComponent<SceneDetails>();
+
                 sceneInstance.transform.parent = zoneInstance.transform;
                 
                 using var lvlStream = File.OpenRead(scenePath);
@@ -124,6 +177,12 @@ namespace DeathBlow.World
                 var lvl = new LvlFile();
 
                 lvl.Deserialize(lvlReader);
+
+                sceneDetails.SceneName = sceneInfo.SceneName;
+
+                sceneDetails.SceneLayer = sceneInfo.LayerId;
+
+                sceneDetails.SkyBox = lvl.LevelSkyConfig == null ? "" : lvl.LevelSkyConfig.Skybox[0];
                 
                 if (lvl.LevelObjects == null) continue;
 

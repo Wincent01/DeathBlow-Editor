@@ -33,6 +33,11 @@ namespace DeathBlow.Components.Game
             }
         }
 
+        public virtual void OnDetailGUI(ObjectDetails details)
+        {
+
+        }
+
         public T GetOrAddComponent<T>() where T : Component
         {
             var component = GetComponent<T>();

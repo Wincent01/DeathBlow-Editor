@@ -123,7 +123,10 @@ namespace DeathBlow.Components.Game
             {
                 _renderAsset = _renderAsset.Replace("\\\\", "\\").Replace('\\', '/');
 
-                if (Path.GetExtension(_renderAsset) != ".nif") return;
+                if (Path.GetExtension(_renderAsset) != ".nif")
+                {
+                    return;
+                }
                 
                 using var steam = Utilities.OpenAssetStreamRead(_renderAsset.ToLower());
                 
