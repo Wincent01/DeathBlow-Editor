@@ -7,6 +7,7 @@ using InfectedRose.Terrain;
 using System.Linq;
 using System.IO;
 using RakDotNet.IO;
+using UnityEngine.EventSystems;
 
 [CustomEditor(typeof(TerrainDetails))]
 public class TerrainDetailsEditor : Editor
@@ -18,6 +19,8 @@ public class TerrainDetailsEditor : Editor
         var terrainProperty = serializedObject.FindProperty("_terrain");
         var defaultHeightProperty = serializedObject.FindProperty("_defaultHeight");
         var sizeProperty = serializedObject.FindProperty("_size");
+        var editingProperty = serializedObject.FindProperty("_editing");
+        var lightmapProperty = serializedObject.FindProperty("_lightmap");
 
         EditorGUI.BeginDisabledGroup(true);
         EditorGUILayout.PropertyField(terrainProperty);
@@ -28,18 +31,24 @@ public class TerrainDetailsEditor : Editor
 
         defaultHeightProperty.floatValue = EditorGUILayout.FloatField("Default Height", defaultHeightProperty.floatValue);
         sizeProperty.intValue = EditorGUILayout.IntField("Size", sizeProperty.intValue);
-
-        serializedObject.ApplyModifiedProperties();
+        EditorGUILayout.PropertyField(editingProperty);
 
         if (GUILayout.Button("Generate"))
         {
             terrainDetails.Initalize();
         }
 
+        GUILayout.Space(5);
+        GUILayout.Label("Export settings");
+
+        EditorGUILayout.PropertyField(lightmapProperty);
+
         if (GUILayout.Button("Export"))
         {
             terrainDetails.Export();
         }
+
+        serializedObject.ApplyModifiedProperties();
     }
 }
 
@@ -51,6 +60,10 @@ public class TerrainDetails : MonoBehaviour
     [SerializeField] private float _defaultHeight;
 
     [SerializeField] private int _size;
+
+    [SerializeField] private bool _editing;
+
+    [SerializeField] private string _lightmap;
 
     public TerrainEditor Editor { get; set; }
 
@@ -116,6 +129,11 @@ public class TerrainDetails : MonoBehaviour
 
                 var terrainChunk = source.Chunks[chunkX * source.Weight + chunkY];
 
+                if (File.Exists(_lightmap))
+                {
+                    terrainChunk.Lightmap.Data = File.ReadAllBytes(_lightmap);
+                }
+
                 var mesh = chunk.sharedMesh;
 
                 var heights = terrainChunk.HeightMap.Data;
@@ -123,8 +141,6 @@ public class TerrainDetails : MonoBehaviour
 
                 var height = 64;
                 var width = 64;
-
-                Debug.Log($"Sqrt({heights.Length}) = {Mathf.Sqrt(heights.Length)}");
 
                 for (var x = 0; x < width; ++x)
                 {
@@ -153,9 +169,6 @@ public class TerrainDetails : MonoBehaviour
                             heights[(ox + 1) * width + (oy + 1) + x] = value;
                         }
                         */
-
-                        var ox = x;
-                        var oy = y;
 
                         var value = verticies[(x * 6) * width + (y * 6)].y;
 
@@ -213,18 +226,25 @@ public class TerrainDetails : MonoBehaviour
 
     void OnScene(SceneView scene)
     {
+        if (!_editing)
+        {
+            return;
+        }
+
         Event e = Event.current;
 
         if (e.type == EventType.MouseDown && e.button == 0)
         {
             Debug.Log("Left Mouse was pressed");
 
+            /*
             Vector3 screenPosition = Event.current.mousePosition;
             screenPosition.y = Camera.current.pixelHeight - screenPosition.y;
             Ray ray = Camera.current.ScreenPointToRay(screenPosition);
+            */
+            Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
             RaycastHit hit;
 
-            Debug.DrawRay(ray.origin, ray.direction, Color.red, 10);
             Debug.Log(ray.origin);
 
             if (Physics.Raycast(ray, out hit))
@@ -258,11 +278,25 @@ public class TerrainDetails : MonoBehaviour
                     {
                         var vertex = vertices[j];
 
-                        if (Vector3.Distance(vertex + offset, hit.point) < 10)
+                        var a = vertex + offset;
+                        var b = hit.point;
+
+                        a.y = b.y;
+
+                        if (Vector3.Distance(a, b) < 10)
                         {
                             Debug.Log("Hit");
 
-                            vertex.y += 3;
+                            if (e.shift)
+                            {
+                                vertex.y -= 3;
+                            }
+                            else
+                            {
+                                vertex.y += 3;
+                            }
+
+                            chunk.GetComponent<MeshCollider>().sharedMesh = mesh;
 
                             any = true;
 
@@ -276,6 +310,7 @@ public class TerrainDetails : MonoBehaviour
                     }
                 }
             }
+
             e.Use();
         }
     }

@@ -41,6 +41,13 @@ public class ObjectDetailsEditor : Editor
         EditorGUILayout.ObjectField("Template", template, template.GetType());
         EditorGUI.EndDisabledGroup();
 
+        if (objectDetails.IsSpawned)
+        {
+            GUILayout.Space(3);
+            GUILayout.Label("This object is a spawn template!");
+            GUILayout.Space(3);
+        }
+
         GUILayout.Label("Components");
 
         foreach (var gameComponent in template.GetComponentsInChildren<GameComponent>())
@@ -52,6 +59,24 @@ public class ObjectDetailsEditor : Editor
             EditorGUI.EndDisabledGroup();
 
             gameComponent.OnDetailGUI(objectDetails);
+
+            if (gameComponent.GetType() == typeof(SpawnerComponent))
+            {
+                var spawnedObjectProperty = serializedObject.FindProperty("_spawnerTemplate");
+
+                EditorGUILayout.PropertyField(spawnedObjectProperty);
+
+                if (objectDetails.SpawnerTemplate != null)
+                {
+                    if (objectDetails.SpawnerTemplate.transform.parent != objectDetails.transform)
+                    {
+                        objectDetails.transform.position = objectDetails.SpawnerTemplate.transform.position;
+                        objectDetails.SpawnerTemplate.transform.parent = objectDetails.transform;
+                    }
+
+                    objectDetails.SpawnerTemplate.GetComponent<ObjectDetails>().IsSpawned = true;
+                }
+            }
         }
 
         GUILayout.Space(5);
@@ -61,6 +86,8 @@ public class ObjectDetailsEditor : Editor
         var dataProperty = serializedObject.FindProperty("_data");
 
         EditorGUILayout.PropertyField(dataProperty);
+
+        serializedObject.ApplyModifiedProperties();
 
         //base.OnInspectorGUI();
     }
@@ -84,9 +111,17 @@ public class ObjectDetails : MonoBehaviour
 
     [HideInInspector] [SerializeField] private int _lot;
 
+    [HideInInspector] [SerializeField] private GameObject _spawnerTemplate;
+
+    [HideInInspector] [SerializeField] private bool _isSpawned;
+
     public List<ObjectDataEntry> Data { get => _data; set => _data = value; }
 
     public int Lot { get => _lot; set => _lot = value; }
+
+    public GameObject SpawnerTemplate { get => _spawnerTemplate; set => _spawnerTemplate = value; }
+
+    public bool IsSpawned { get => _isSpawned; set => _isSpawned = value; }
 
     public ObjectDataEntry GetEntry(string key) => _data.FirstOrDefault(e => e.Key == key);
 

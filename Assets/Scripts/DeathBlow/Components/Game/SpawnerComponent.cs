@@ -35,7 +35,14 @@ namespace DeathBlow.Components.Game
 
             var value = entry == null ? "" : entry.Value;
 
-            value = EditorGUILayout.TextField("Spawn Template", value);
+            if (details.SpawnerTemplate != null)
+            {
+                value = details.SpawnerTemplate.GetComponent<ObjectDetails>().Lot.ToString();
+            }
+            else
+            {
+                value = EditorGUILayout.TextField("Spawn Template", value);
+            }
 
             if (entry == null && !string.IsNullOrWhiteSpace(value))
             {

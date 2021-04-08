@@ -107,6 +107,11 @@ namespace DeathBlow.World
                 {
                     var chunk = terrain.Chunks[x + y * terrain.Height];
 
+                    if (Directory.Exists("lightmap/"))
+                    {
+                        File.WriteAllBytes($"lightmap/lightmap_{x}_{y}.dds", chunk.Lightmap.Data);
+                    }
+
                     var triangles = chunk.Triangulate();
                     
                     var instance = new GameObject($"Chunk ({x}, {y})");

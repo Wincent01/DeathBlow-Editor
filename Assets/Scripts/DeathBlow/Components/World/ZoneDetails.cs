@@ -96,9 +96,11 @@ public class ZoneDetails : MonoBehaviour
             var normalizedLvlName = s.SceneName.ToLower().Replace(" ", "_");
 
             luzScene.FileName = $"{nameNormalized}_{normalizedLvlName}.lvl";
-            luzScene.SceneId = sceneId++;
+            luzScene.SceneId = sceneId;
             luzScene.LayerId = s.SceneLayer;
             luzScene.SceneName = s.name;
+
+            sceneId++;
 
             return luzScene;
         }).ToArray();
@@ -127,7 +129,7 @@ public class ZoneDetails : MonoBehaviour
 
             lvl.LevelObjects = new LevelObjects(lvl.LvlVersion);
 
-            var objects = scene.GetComponentsInChildren<ObjectDetails>();
+            var objects = scene.GetComponentsInChildren<ObjectDetails>().Where(o => !o.IsSpawned).ToArray();
 
             var objectId = 3696899ul;
 
