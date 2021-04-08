@@ -20,7 +20,7 @@ namespace DeathBlow.Components.Game
 
             var cameraPosition = SceneView.currentDrawingSceneView.camera.transform.position;
 
-            if (Vector3.Distance(cameraPosition, transform.position) > 40) return;
+            if (Vector3.Distance(cameraPosition, transform.position) > 40.5f) return;
 
             var entry = details.GetEntry("spawntemplate");
 

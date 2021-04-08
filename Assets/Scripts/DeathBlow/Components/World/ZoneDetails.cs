@@ -105,12 +105,9 @@ public class ZoneDetails : MonoBehaviour
 
         var terrainFile = $"{nameNormalized}.raw";
 
-        var settings = new TerrainSettings();
+        var terrainDetails = GetComponentInChildren<TerrainDetails>();
 
-        settings.DefaultHeight = 0;
-        settings.Size = 3;
-
-        var terrain = TerrainEditor.OpenEmptyAsync(settings).Result;
+        var terrain = terrainDetails.Export();
 
         terrain.SaveAsync(Path.Combine(resultPath, terrainFile)).Wait();
 

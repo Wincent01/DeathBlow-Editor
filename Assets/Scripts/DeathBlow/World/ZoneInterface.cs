@@ -121,6 +121,14 @@ namespace DeathBlow.World
 
             sceneDetails.SkyBox = "";
 
+            var terrainInstance = new GameObject($"Terrain");
+
+            terrainInstance.transform.parent = zoneInstance.transform;
+
+            var terrainDetails = terrainInstance.AddOrGetComponent<TerrainDetails>();
+
+            terrainDetails.Initalize();
+
             return zoneInstance;
         }
 

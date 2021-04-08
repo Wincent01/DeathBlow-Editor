@@ -30,13 +30,6 @@ namespace DeathBlow.World
         
         private void OnGUI()
         {
-            if (!WorkspaceControl.Ok)
-            {
-                GUILayout.Label("Workspace not loaded.");
-
-                return;
-            }
-
             if (!string.IsNullOrWhiteSpace(Notice))
             {
                 var style = new GUIStyle(EditorStyles.textField);
@@ -86,18 +79,24 @@ namespace DeathBlow.World
             EditorGUILayout.EndHorizontal();
         }
 
+
         public static GameObject Import(string workingFile)
         {
-            const float scale = 3.125f;
-            
             using var stream = File.OpenRead(workingFile);
             using var reader = new BitReader(stream);
-            
+
             var terrain = new TerrainFile();
-            
+
             terrain.Deserialize(reader);
-            
-            var terrainInstance = new GameObject($"Terrain {Path.GetFileName(workingFile)}");
+
+            return Import(terrain);
+        }
+
+        public static GameObject Import(TerrainFile terrain)
+        {
+            const float scale = 3.125f;
+
+            var terrainInstance = new GameObject($"Terrain");
             
             var centerX = (terrain.Weight - 1) * terrain.Chunks[0].HeightMap.Width / 2;
             var centerY = (terrain.Height - 1) * terrain.Chunks[0].HeightMap.Height / 2;
