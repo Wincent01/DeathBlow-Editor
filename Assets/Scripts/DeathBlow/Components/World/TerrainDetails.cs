@@ -21,6 +21,7 @@ public class TerrainDetailsEditor : Editor
         var sizeProperty = serializedObject.FindProperty("_size");
         var editingProperty = serializedObject.FindProperty("_editing");
         var lightmapProperty = serializedObject.FindProperty("_lightmap");
+        var blendmapProperty = serializedObject.FindProperty("_blendmap");
 
         EditorGUI.BeginDisabledGroup(true);
         EditorGUILayout.PropertyField(terrainProperty);
@@ -42,6 +43,7 @@ public class TerrainDetailsEditor : Editor
         GUILayout.Label("Export settings");
 
         EditorGUILayout.PropertyField(lightmapProperty);
+        EditorGUILayout.PropertyField(blendmapProperty);
 
         if (GUILayout.Button("Export"))
         {
@@ -64,6 +66,8 @@ public class TerrainDetails : MonoBehaviour
     [SerializeField] private bool _editing;
 
     [SerializeField] private string _lightmap;
+
+    [SerializeField] private string _blendmap;
 
     public TerrainEditor Editor { get; set; }
 
@@ -116,7 +120,7 @@ public class TerrainDetails : MonoBehaviour
 
         var chunks = GetComponentsInChildren<MeshFilter>();
 
-        terrain.Load();
+        terrain.HeightLayer.LoadHeightMap();
 
         for (var chunkX = 0; chunkX < source.Weight; ++chunkX)
         {
@@ -129,10 +133,36 @@ public class TerrainDetails : MonoBehaviour
 
                 var terrainChunk = source.Chunks[chunkX * source.Weight + chunkY];
 
+                terrainChunk.ColorRelatedArray = new byte[1024];
+                terrainChunk.Colormap0.Data = Enumerable.Repeat(System.Drawing.Color.FromArgb(255, 82, 18, 18), 1024).ToArray();
+                terrainChunk.Colormap1.Size = 128;
+                terrainChunk.Colormap1.Data = Enumerable.Repeat(System.Drawing.Color.FromArgb(255, 0, 0, 0), 128 * 128).ToArray();
+                terrainChunk.TextureSetting = 9;
+                terrainChunk.UnknownByteArray1 = new byte[32];
+                for (var i = 0; i < 32; i += 2)
+                {
+                    terrainChunk.UnknownByteArray1[i] = 5;
+                    terrainChunk.UnknownByteArray1[i + 1] = 0;
+                }
+                terrainChunk.UnknownShortArray = new short[16][];
+                for (var i = 0; i < 16; ++i)
+                {
+                    terrainChunk.UnknownShortArray[i] = new short[9] { 3, 0, 4, 1, 2, 0, 4, 0, 2 };
+                }
+
                 if (File.Exists(_lightmap))
                 {
                     terrainChunk.Lightmap.Data = File.ReadAllBytes(_lightmap);
                 }
+
+
+                if (File.Exists(_blendmap))
+                {
+                    terrainChunk.Blendmap.Data = File.ReadAllBytes(_blendmap);
+                }
+                /*
+                terrainChunk.ShortMap.Data = new short[4225];
+                terrainChunk.ShortMap.Data[0] = -1;*/
 
                 var mesh = chunk.sharedMesh;
 
@@ -197,7 +227,7 @@ public class TerrainDetails : MonoBehaviour
             }
         }
 
-        terrain.Apply();
+        terrain.HeightLayer.ApplyHeightMap();
 
         using var stream = File.Create("./tmp.raw");
 

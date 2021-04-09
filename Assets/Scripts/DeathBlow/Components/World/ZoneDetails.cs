@@ -99,6 +99,7 @@ public class ZoneDetails : MonoBehaviour
             luzScene.SceneId = sceneId;
             luzScene.LayerId = s.SceneLayer;
             luzScene.SceneName = s.name;
+            luzScene.UnknownByteArray = new byte[3] { 255, 255, 255 };
 
             sceneId++;
 
@@ -125,7 +126,50 @@ public class ZoneDetails : MonoBehaviour
 
             lvl.LvlVersion = 0x26;
             lvl.LevelSkyConfig = new LevelSkyConfig();
-            lvl.LevelSkyConfig.Skybox[0] = scene.SkyBox;
+
+            lvl.LevelSkyConfig.Skybox = new string[6]
+            {
+                scene.SkyBox,
+                "(invalid)",
+                "(invalid)",
+                "(invalid)",
+                "(invalid)",
+                "(invalid)",
+            };
+
+            /*lvl.LevelSkyConfig.UnknownFloatArray0 = new float[25]
+            {
+                10, 0.41960784792900085f, 0.6196078658103943f, 0.7490196228027344f, 1, 1, 1, 1, 1, 1, 0, -2500, 1500, 150, 175, 3100, 100, 1000, 350, 150, 225, 3100, 100, 1000, 350
+            };*/
+            var lightRotation = scene.Light != null ? scene.Light.transform.rotation : new Quaternion(0.41960784792900085f, 0.6196078658103943f, 0.7490196228027344f, 1);
+            lvl.LevelSkyConfig.UnknownFloatArray0 = new float[25]
+            {
+                scene.Luminosity, // Luminosity?
+                lightRotation.x, lightRotation.y, lightRotation.z, lightRotation.w, // Quaternion
+                1, 1, 1, 1, 1, 0,
+                -2500, // ??
+                scene.FogIntensity, // Fog intensity?
+                scene.FogStart, // Fog start
+                scene.FogEnd, // Fog end
+                3100, 100, 1000, 350, 150, 225, 3100, 100, 1000, 350
+            };
+            lvl.LevelSkyConfig.UnknownFloatArray1 = new float[3] { 1, 0.98f, 0.85f };
+            lvl.LevelSkyConfig.UnknownFloatArray2 = new float[3] { 0.78f, 0.89f, 1 };
+            lvl.LevelSkyConfig.UnknownSectionData = Enumerable.Repeat((byte) 30, 388).ToArray();
+            lvl.LevelSkyConfig.Identifiers = new IdStruct[11]
+            {
+                new IdStruct(0, 0, 0),
+                new IdStruct(1, 100, 150),
+                new IdStruct(2, 150, 200),
+                new IdStruct(3, 200, 250),
+                new IdStruct(4, 250, 300),
+                new IdStruct(5, 40, 40),
+                new IdStruct(6, 40, 40),
+                new IdStruct(7, 400, 600),
+                new IdStruct(8, 60, 100),
+                new IdStruct(9, 50, 100),
+                new IdStruct(10, 300, 400)
+            };
 
             lvl.LevelObjects = new LevelObjects(lvl.LvlVersion);
 
@@ -158,6 +202,13 @@ public class ZoneDetails : MonoBehaviour
         using var luzWriter = new BitWriter(luzStream);
 
         luz.Serialize(luzWriter);
+
+        if (!WorkspaceControl.Ok)
+        {
+            Debug.LogError("Workspace not loaded, could not insert zone into database.");
+
+            return;
+        }
 
         var zoneTable = WorkspaceControl.Database["ZoneTable"];
 

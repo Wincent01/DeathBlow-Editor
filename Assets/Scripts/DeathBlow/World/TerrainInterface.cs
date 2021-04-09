@@ -96,6 +96,9 @@ namespace DeathBlow.World
         {
             const float scale = 3.125f;
 
+            var color2 = terrain.Chunks[0].Colormap1.Data;
+            var color = terrain.Chunks[0].Colormap1.Data[0];
+
             var terrainInstance = new GameObject($"Terrain");
             
             var centerX = (terrain.Weight - 1) * terrain.Chunks[0].HeightMap.Width / 2;
@@ -110,6 +113,11 @@ namespace DeathBlow.World
                     if (Directory.Exists("lightmap/"))
                     {
                         File.WriteAllBytes($"lightmap/lightmap_{x}_{y}.dds", chunk.Lightmap.Data);
+                    }
+
+                    if (Directory.Exists("blendmap/"))
+                    {
+                        File.WriteAllBytes($"blendmap/blendmap_{x}_{y}.dds", chunk.Blendmap.Data);
                     }
 
                     var triangles = chunk.Triangulate();

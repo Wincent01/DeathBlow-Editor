@@ -142,7 +142,7 @@ namespace DeathBlow.World
             var zone = new LuzFile();
             
             zone.Deserialize(reader);
-            
+
             var zoneInstance = new GameObject($"Zone {Path.GetFileName(workingFile)}");
 
             var zoneDetails = zoneInstance.AddOrGetComponent<ZoneDetails>();
@@ -178,7 +178,7 @@ namespace DeathBlow.World
                 var sceneDetails = sceneInstance.AddOrGetComponent<SceneDetails>();
 
                 sceneInstance.transform.parent = zoneInstance.transform;
-                
+
                 using var lvlStream = File.OpenRead(scenePath);
                 using var lvlReader = new BitReader(lvlStream);
                 

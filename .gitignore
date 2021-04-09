@@ -374,3 +374,4 @@ Assets/Workspaces/Default
 *.sln
 .vsconfig
 lightmap/
+blendmap/
