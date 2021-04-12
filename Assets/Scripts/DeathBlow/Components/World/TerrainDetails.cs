@@ -8,6 +8,7 @@ using System.Linq;
 using System.IO;
 using RakDotNet.IO;
 using UnityEngine.EventSystems;
+using DeathBlow;
 
 [CustomEditor(typeof(TerrainDetails))]
 public class TerrainDetailsEditor : Editor
@@ -122,6 +123,8 @@ public class TerrainDetails : MonoBehaviour
 
         terrain.HeightLayer.LoadHeightMap();
 
+        var maxWidth = terrain.Source.Weight * 65;
+
         for (var chunkX = 0; chunkX < source.Weight; ++chunkX)
         {
             for (var chunkY = 0; chunkY < source.Height; ++chunkY)
@@ -227,6 +230,20 @@ public class TerrainDetails : MonoBehaviour
             }
         }
 
+        /*
+        var map = Utilities.CloneDictionary(terrain.HeightLayer.Heights);
+
+        foreach (var pair in map)
+        {
+            var pos = pair.Key;
+            pos.X = maxWidth - pos.X;
+
+            if (pos.X % 65 == 0) continue;
+
+            terrain.HeightLayer.SetHeight(pos, pair.Value);
+        }
+        */
+
         terrain.HeightLayer.ApplyHeightMap();
 
         using var stream = File.Create("./tmp.raw");
@@ -304,11 +321,15 @@ public class TerrainDetails : MonoBehaviour
 
                     var any = false;
 
+                    var maxX = vertices.Max(v => v.x);
+
+                    var localToWorld = chunk.transform.localToWorldMatrix;
+
                     for (var j = 0; j < vertices.Length; ++j)
                     {
                         var vertex = vertices[j];
 
-                        var a = vertex + offset;
+                        var a = localToWorld.MultiplyPoint3x4(vertex);
                         var b = hit.point;
 
                         a.y = b.y;

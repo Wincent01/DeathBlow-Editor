@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using DeathBlow.Components;
 using DeathBlow.Components.Editors;
@@ -158,6 +159,18 @@ namespace DeathBlow
             GUI.Label(new Rect(screenPos.x - (size.x / 2), -screenPos.y + view.position.height + 4, size.x, size.y), text);
             GUI.color = restoreColor;
             Handles.EndGUI();
+        }
+
+        public static Dictionary<TKey, TValue> CloneDictionary<TKey, TValue> (Dictionary<TKey, TValue> original)
+        {
+            Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>(original.Count,
+                                                                    original.Comparer);
+            foreach (KeyValuePair<TKey, TValue> entry in original)
+            {
+                ret.Add(entry.Key, (TValue)entry.Value);
+            }
+
+            return ret;
         }
 
         /*

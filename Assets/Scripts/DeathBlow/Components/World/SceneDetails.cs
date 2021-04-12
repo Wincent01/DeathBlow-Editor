@@ -32,10 +32,43 @@ public class SceneDetails : MonoBehaviour
     [SerializeField] private float _luminosity;
 
     [SerializeField] private float _fogIntensity = 0;
-    
+
+    [SerializeField] public Vector3 _unknownVector0;
+
+    [SerializeField] public Vector3 _unknownVector1;
+
+    [SerializeField] public Transform _unknownRotation0;
+
+    [SerializeField] public Transform _unknownRotation1;
+
+    [Header("Fog 0")]
     [SerializeField] private float _fogStart = 1500;
 
     [SerializeField] private float _fogEnd = 1750;
+
+    [SerializeField] public float _unknownFogSetting0;
+
+    [SerializeField] public float _unknownFogSetting1;
+
+    [SerializeField] public float _unknownFogSetting2;
+
+    [SerializeField] public float _unknownFogSetting3;
+
+    [Header("Fog 1")]
+    [SerializeField] public float _fogStart1 = 1500;
+
+    [SerializeField] public float _fogEnd1 = 1750;
+
+    [SerializeField] public float _unknownFogSetting0_1;
+
+    [SerializeField] public float _unknownFogSetting1_1;
+
+    [SerializeField] public float _unknownFogSetting2_1;
+
+    [SerializeField] public float _unknownFogSetting3_1;
+
+    [Header("Debug")]
+    [SerializeField] public string _sourceLevelFile;
 
     public string SceneName { get => _sceneName; set => _sceneName = value; }
     
