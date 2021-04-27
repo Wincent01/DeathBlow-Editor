@@ -125,7 +125,7 @@ namespace DeathBlow.World
 
         public static Vector3[,] GenerateRealMap(this TerrainFile @this)
         {
-            const float scale = 3.125f;
+            const float scale = 3.2f; //3.125f;
             
             var heightMap = @this.GenerateHeightMap();
 
@@ -246,7 +246,7 @@ namespace DeathBlow.World
         
         public static Vector3[,] GenerateRealMap(this Chunk @this)
         {
-            const float scale = 3.125f;
+            const float scale = 3.2f; //3.125f;
             
             var heightMap = @this.GenerateHeightMap();
 

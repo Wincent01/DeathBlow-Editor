@@ -62,7 +62,7 @@ namespace DeathBlow.World
             {
                 WorkingFile = EditorUtility.OpenFilePanelWithFilters(
                                 "Select zone file...",
-                                selected ? Path.GetDirectoryName(WorkingFile) : ResourceUtilities.SearchRoot,
+                                selected ? Path.GetDirectoryName(WorkingFile) : Path.Combine(ResourceUtilities.SearchRoot, "maps/"),
                                 new[] {"Zone (*.luz)", "luz"}
                 );
             }
@@ -118,8 +118,6 @@ namespace DeathBlow.World
             sceneDetails.SceneName = "Global Scene";
 
             sceneDetails.SceneLayer = 0;
-
-            sceneDetails.SkyBox = "";
 
             var terrainInstance = new GameObject($"Terrain");
 
@@ -190,7 +188,7 @@ namespace DeathBlow.World
 
                 sceneDetails.SceneLayer = sceneInfo.LayerId;
 
-                sceneDetails.SkyBox = lvl.LevelSkyConfig == null ? "" : lvl.LevelSkyConfig.Skybox[0];
+                sceneDetails.SkyBox = lvl.LevelSkyConfig == null ? sceneDetails.SkyBox : lvl.LevelSkyConfig.Skybox;
                 
                 if (lvl.LevelObjects == null) continue;
 

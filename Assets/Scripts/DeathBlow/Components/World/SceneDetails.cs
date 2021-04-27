@@ -25,7 +25,15 @@ public class SceneDetails : MonoBehaviour
 
     [SerializeField] private uint _sceneLayer;
 
-    [SerializeField] private string _skyBox;
+    [SerializeField] private string[] _skyBox =
+    {
+                    "",
+                    "(invalid)",
+                    "(invalid)",
+                    "(invalid)",
+                    "(invalid)",
+                    "(invalid)"
+    };
 
     [SerializeField] private Transform _light;
 
@@ -74,7 +82,7 @@ public class SceneDetails : MonoBehaviour
     
     public uint SceneLayer { get => _sceneLayer; set => _sceneLayer = value; }
 
-    public string SkyBox { get => _skyBox; set => _skyBox = value; }
+    public string[] SkyBox { get => _skyBox; set => _skyBox = value; }
     
     public Transform Light { get => _light; set => _light = value; }
     

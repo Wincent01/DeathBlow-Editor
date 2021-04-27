@@ -567,19 +567,23 @@ namespace DeathBlow
 
         public void BuildAmbientLight(NiAmbientLight info, GameObject parent)
         {
+            /*
             var light = parent.AddOrGetComponent<Light>();
 
             var color = info.AmbientColor;
         
             light.color = new Color(color.r, color.g, color.b);
             light.type = LightType.Directional;
+            */
         }
 
         public void BuildCamera(NiCamera info, GameObject parent)
         {
+            /*
             var camera = parent.AddOrGetComponent<Camera>();
 
             camera.rect = new Rect(info.ViewportRight, info.ViewportRight, info.FrustumLeft, info.ViewportBottom);
+            */
         }
     }
 }

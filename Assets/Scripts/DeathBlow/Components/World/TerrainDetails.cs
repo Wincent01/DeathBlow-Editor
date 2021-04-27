@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using InfectedRose.Terrain.Editing;
 using DeathBlow.World;
 using UnityEditor;
@@ -9,6 +11,7 @@ using System.IO;
 using RakDotNet.IO;
 using UnityEngine.EventSystems;
 using DeathBlow;
+using NativeColor = System.Drawing.Color;
 
 [CustomEditor(typeof(TerrainDetails))]
 public class TerrainDetailsEditor : Editor
@@ -23,6 +26,12 @@ public class TerrainDetailsEditor : Editor
         var editingProperty = serializedObject.FindProperty("_editing");
         var lightmapProperty = serializedObject.FindProperty("_lightmap");
         var blendmapProperty = serializedObject.FindProperty("_blendmap");
+        var radiusProperty = serializedObject.FindProperty("_radius");
+        var powerProperty = serializedObject.FindProperty("_power");
+        var smoothFactorProperty = serializedObject.FindProperty("_smoothFactor");
+        var colorProperty = serializedObject.FindProperty("_color");
+        var modeProperty = serializedObject.FindProperty("_mode");
+        var setHeightProperty = serializedObject.FindProperty("_setHeight");
 
         EditorGUI.BeginDisabledGroup(true);
         EditorGUILayout.PropertyField(terrainProperty);
@@ -33,12 +42,21 @@ public class TerrainDetailsEditor : Editor
 
         defaultHeightProperty.floatValue = EditorGUILayout.FloatField("Default Height", defaultHeightProperty.floatValue);
         sizeProperty.intValue = EditorGUILayout.IntField("Size", sizeProperty.intValue);
-        EditorGUILayout.PropertyField(editingProperty);
 
         if (GUILayout.Button("Generate"))
         {
             terrainDetails.Initalize();
         }
+        
+        GUILayout.Space(5);
+        GUILayout.Label("Editing");
+        EditorGUILayout.PropertyField(modeProperty);
+        EditorGUILayout.PropertyField(editingProperty);
+        EditorGUILayout.PropertyField(radiusProperty);
+        EditorGUILayout.PropertyField(powerProperty);
+        EditorGUILayout.PropertyField(smoothFactorProperty);
+        EditorGUILayout.PropertyField(colorProperty);
+        EditorGUILayout.PropertyField(setHeightProperty);
 
         GUILayout.Space(5);
         GUILayout.Label("Export settings");
@@ -58,6 +76,14 @@ public class TerrainDetailsEditor : Editor
 [ExecuteInEditMode]
 public class TerrainDetails : MonoBehaviour
 {
+    public enum EditMode
+    {
+        Terrain,
+        Color,
+        SetHeight,
+        Smooth
+    }
+    
     [SerializeField] private GameObject _terrain;
 
     [SerializeField] private float _defaultHeight;
@@ -69,6 +95,18 @@ public class TerrainDetails : MonoBehaviour
     [SerializeField] private string _lightmap;
 
     [SerializeField] private string _blendmap;
+
+    [SerializeField] private EditMode _mode;
+    
+    [SerializeField] private float _radius;
+
+    [SerializeField] private float _power;
+    
+    [SerializeField] private float _smoothFactor;
+
+    [SerializeField] private Color _color;
+
+    [SerializeField] private float _setHeight;
 
     public TerrainEditor Editor { get; set; }
 
@@ -100,7 +138,7 @@ public class TerrainDetails : MonoBehaviour
 
         var chunks = GetComponentsInChildren<MeshFilter>();
 
-        for (int i = 0; i < chunks.Length; i++)
+        for (var i = 0; i < chunks.Length; i++)
         {
             var chunk = chunks[i];
 
@@ -112,6 +150,7 @@ public class TerrainDetails : MonoBehaviour
     {
         var settings = new TerrainSettings();
 
+        //settings.ChunkSpacing = 3.2f * settings.ChunkSize;
         settings.DefaultHeight = _defaultHeight;
         settings.Size = _size;
 
@@ -122,8 +161,9 @@ public class TerrainDetails : MonoBehaviour
         var chunks = GetComponentsInChildren<MeshFilter>();
 
         terrain.HeightLayer.LoadHeightMap();
+        //terrain.ColorLayer.LoadColorMap();
 
-        var maxWidth = terrain.Source.Weight * 65;
+        var maxWidth = terrain.Source.Weight * 64;
 
         for (var chunkX = 0; chunkX < source.Weight; ++chunkX)
         {
@@ -136,11 +176,13 @@ public class TerrainDetails : MonoBehaviour
 
                 var terrainChunk = source.Chunks[chunkX * source.Weight + chunkY];
 
-                terrainChunk.ColorRelatedArray = new byte[1024];
-                terrainChunk.Colormap0.Data = Enumerable.Repeat(System.Drawing.Color.FromArgb(255, 82, 18, 18), 1024).ToArray();
+                terrainChunk.ColorRelatedArray = Enumerable.Repeat((byte) 0, 1024).ToArray(); //new byte[1024];
+                terrainChunk.Colormap0.Size = 32;
+                terrainChunk.Colormap0.Data = Enumerable.Repeat(/*System.Drawing.Color.FromArgb(255, 82, 18, 18)*/
+                                System.Drawing.Color.FromArgb(255, 0, 0, 0), 32 * 32).ToArray();
                 terrainChunk.Colormap1.Size = 128;
-                terrainChunk.Colormap1.Data = Enumerable.Repeat(System.Drawing.Color.FromArgb(255, 0, 0, 0), 128 * 128).ToArray();
-                terrainChunk.TextureSetting = 9;
+                terrainChunk.Colormap1.Data = Enumerable.Repeat(NativeColor.FromArgb(255, 0, 0, 0), 128 * 128).ToArray();
+                terrainChunk.TextureSetting = 1;
                 terrainChunk.UnknownByteArray1 = new byte[32];
                 for (var i = 0; i < 32; i += 2)
                 {
@@ -158,7 +200,6 @@ public class TerrainDetails : MonoBehaviour
                     terrainChunk.Lightmap.Data = File.ReadAllBytes(_lightmap);
                 }
 
-
                 if (File.Exists(_blendmap))
                 {
                     terrainChunk.Blendmap.Data = File.ReadAllBytes(_blendmap);
@@ -171,6 +212,7 @@ public class TerrainDetails : MonoBehaviour
 
                 var heights = terrainChunk.HeightMap.Data;
                 var verticies = mesh.vertices.ToArray();
+                var colors = mesh.colors.ToArray();
 
                 var height = 64;
                 var width = 64;
@@ -203,9 +245,35 @@ public class TerrainDetails : MonoBehaviour
                         }
                         */
 
-                        var value = verticies[(x * 6) * width + (y * 6)].y;
+                        var index = (x * 6) * width + (y * 6);
+                        var value = verticies[index].y;
+                        var sourceColor = colors[(x * 6) * width + (y * 6)];
+                        var color = NativeColor.FromArgb((int) sourceColor.a, (int) sourceColor.r, (int) sourceColor.g, (int) sourceColor.b);
 
-                        terrain.HeightLayer.SetHeight(new System.Numerics.Vector2(x + (chunkX * 64), y + (chunkY * 64)), value);
+                        terrain.HeightLayer.SetHeight(new System.Numerics.Vector2(width - (x + 1) + (chunkX * 64),  (y) + (chunkY * 64)), value);
+
+                        /*
+                        if (x == 63)
+                        {
+                            terrain.HeightLayer.SetHeight(new System.Numerics.Vector2(width - (x + 1) + (chunkX * 64),  y + (chunkY * 64)), value);
+                        }
+                        
+                        if (y == 63)
+                        {
+                            terrain.HeightLayer.SetHeight(new System.Numerics.Vector2(width - x + (chunkX * 64),  (y + 1) + (chunkY * 64)), value);
+                        }
+
+                        if (x == 63 && y == 63)
+                        {
+                            terrain.HeightLayer.SetHeight(new System.Numerics.Vector2(width - (x + 1) + (chunkX * 64),  (y + 1) + (chunkY * 64)), value);
+                        }
+                        */
+                        
+                        /*if (x % 2 == 0 && y % 2 == 0)
+                        {
+                            terrainChunk.Colormap0.Data[(x / 2) + (y / 2) * height / 2] = color;
+                        }*/
+                        //terrain.ColorLayer.SetColor(new System.Numerics.Vector2(x + (chunkX * 64), y + (chunkY * 64)), color);
 
                         /*
                         heights[ox * width + oy + x] = value;
@@ -238,13 +306,12 @@ public class TerrainDetails : MonoBehaviour
             var pos = pair.Key;
             pos.X = maxWidth - pos.X;
 
-            if (pos.X % 65 == 0) continue;
-
             terrain.HeightLayer.SetHeight(pos, pair.Value);
         }
         */
 
         terrain.HeightLayer.ApplyHeightMap();
+        //terrain.ColorLayer.ApplyColorMap();
 
         using var stream = File.Create("./tmp.raw");
 
@@ -278,21 +345,26 @@ public class TerrainDetails : MonoBehaviour
             return;
         }
 
-        Event e = Event.current;
+        var e = Event.current;
 
-        if (e.type == EventType.MouseDown && e.button == 0)
+        if (e.button == 0)
         {
-            Debug.Log("Left Mouse was pressed");
+            if (e.type != EventType.MouseDown && e.type != EventType.Used)
+            {
+                return;
+            }
+            
+            //Debug.Log("Left Mouse was pressed");
 
             /*
             Vector3 screenPosition = Event.current.mousePosition;
             screenPosition.y = Camera.current.pixelHeight - screenPosition.y;
             Ray ray = Camera.current.ScreenPointToRay(screenPosition);
             */
-            Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+            var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
             RaycastHit hit;
 
-            Debug.Log(ray.origin);
+            //Debug.Log(ray.origin);
 
             if (Physics.Raycast(ray, out hit))
             {
@@ -304,18 +376,19 @@ public class TerrainDetails : MonoBehaviour
                 brush.Apply(new Vector2(hit.point.x, hit.point.y));
                 */
 
-                Debug.Log("Instantiated Primitive " + hit.point);
+                Debug.Log(hit.point);
                 //Do something, ---Example---
 
                 var chunks = GetComponentsInChildren<MeshFilter>();
 
-                for (int i = 0; i < chunks.Length; i++)
+                for (var i = 0; i < chunks.Length; i++)
                 {
                     var chunk = chunks[i];
 
                     var mesh = chunk.sharedMesh;
 
                     var vertices = mesh.vertices;
+                    var colors = mesh.colors;
 
                     var offset = chunk.transform.position;
 
@@ -325,6 +398,10 @@ public class TerrainDetails : MonoBehaviour
 
                     var localToWorld = chunk.transform.localToWorldMatrix;
 
+                    var selected = new List<int>();
+
+                    var total = 0.0f;
+                    
                     for (var j = 0; j < vertices.Length; ++j)
                     {
                         var vertex = vertices[j];
@@ -334,36 +411,98 @@ public class TerrainDetails : MonoBehaviour
 
                         a.y = b.y;
 
-                        if (Vector3.Distance(a, b) < 10)
+                        var distance = Vector3.Distance(a, b);
+
+                        if (distance < _radius)
                         {
-                            Debug.Log("Hit");
-
-                            if (e.shift)
+                            if (_mode == EditMode.Smooth)
                             {
-                                vertex.y -= 3;
+                                total += vertex.y;
+                                selected.Add(j);
+                                
+                                any = true;
+                            
+                                continue;
                             }
-                            else
+
+                            //Debug.Log("Hit");
+
+                            var multiplier = (float) (1 / (Math.Pow(_smoothFactor, distance) + 1));
+
+                            var power = _power * multiplier;
+
+                            switch (_mode)
                             {
-                                vertex.y += 3;
+                                case EditMode.Terrain:
+                                    if (e.shift)
+                                    {
+                                        vertex.y -= power;
+                                    }
+                                    else
+                                    {
+                                        vertex.y += power;
+                                    }
+
+                                    if (vertex.y > _setHeight)
+                                    {
+                                        vertex.y = _setHeight;
+                                    }
+                                    break;
+                                case EditMode.Color:
+                                    colors[j] = MoveTowards(colors[j], _color, power);
+                                    break;
+                                case EditMode.SetHeight:
+                                    vertex.y = _setHeight;
+                                    break;
+                                case EditMode.Smooth:
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException();
                             }
-
-                            chunk.GetComponent<MeshCollider>().sharedMesh = mesh;
-
+                            
                             any = true;
 
                             vertices[j] = vertex;
                         }
                     }
 
+                    chunk.GetComponent<MeshCollider>().sharedMesh = mesh;
+
                     if (any)
                     {
                         mesh.vertices = vertices;
+                        mesh.colors = colors;
                     }
                 }
             }
 
             e.Use();
         }
+    }
+    
+    private static Color MoveTowards(
+                    Color current,
+                    Color target,
+                    float maxDistanceDelta)
+    {
+        var r = target.r - current.r;
+        var g = target.g - current.g;
+        var b = target.b - current.b;
+        var d = (float) (r * (double) r + g * (double) g + b * (double) b);
+        if (d == 0.0 || maxDistanceDelta >= 0.0 && d <= maxDistanceDelta * (double) maxDistanceDelta)
+            return target;
+        var num5 = (float) Math.Sqrt(d);
+        return new Color(current.r + r / num5 * maxDistanceDelta, current.g + g / num5 * maxDistanceDelta, current.b + b / num5 * maxDistanceDelta, current.a);
+    }
+
+    private static float MoveTowards(float current, float target, float maxDistanceDelta)
+    {
+        var r = target - current;
+        var d = r * r;
+        if (d == 0.0 || maxDistanceDelta >= 0.0 && d <= maxDistanceDelta * (double) maxDistanceDelta)
+            return target;
+        var num5 = (float) Math.Sqrt(d);
+        return current + r / num5 * maxDistanceDelta;
     }
 
     public void EndEdit()

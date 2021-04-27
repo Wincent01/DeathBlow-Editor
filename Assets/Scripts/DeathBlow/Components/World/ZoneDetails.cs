@@ -31,8 +31,6 @@ public class ZoneDetailsEditor : Editor
             sceneDetails.SceneName = "New Scene";
 
             sceneDetails.SceneLayer = 0;
-
-            sceneDetails.SkyBox = "";
         }
 
         base.OnInspectorGUI();
@@ -91,6 +89,7 @@ public class ZoneDetails : MonoBehaviour
             source.Deserialize(sourceReader);
 
             luz.UnknownByte = source.UnknownByte;
+            luz.Transitions = source.Transitions;
 
             Debug.Log($"Unknown Byte: {luz.UnknownByte}");
         }
@@ -140,18 +139,10 @@ public class ZoneDetails : MonoBehaviour
 
             lvl.LevelInfo = new LevelInfo();
 
-            lvl.LvlVersion = 0x26;
+            lvl.LvlVersion = 0x48;
             lvl.LevelSkyConfig = new LevelSkyConfig();
 
-            lvl.LevelSkyConfig.Skybox = new string[6]
-            {
-                scene.SkyBox,
-                "(invalid)",
-                "(invalid)",
-                "(invalid)",
-                "(invalid)",
-                "(invalid)",
-            };
+            lvl.LevelSkyConfig.Skybox = scene.SkyBox;
 
             /*lvl.LevelSkyConfig.UnknownFloatArray0 = new float[25]
             {
@@ -208,6 +199,7 @@ public class ZoneDetails : MonoBehaviour
                 lvl.LevelSkyConfig.UnknownFloatArray2 = source.LevelSkyConfig.UnknownFloatArray2;
                 lvl.LevelSkyConfig.UnknownSectionData = source.LevelSkyConfig.UnknownSectionData;
                 lvl.LevelSkyConfig.Identifiers = source.LevelSkyConfig.Identifiers;
+                lvl.LevelEnvironmentConfig = source.LevelEnvironmentConfig;
             }
 
             lvl.LevelObjects = new LevelObjects(lvl.LvlVersion);
@@ -216,21 +208,38 @@ public class ZoneDetails : MonoBehaviour
 
             var objectId = 3696899ul;
 
+            var scale = gameObject.transform.localScale;
+            scale.z *= -1;
+            gameObject.transform.localScale = scale;
+
             lvl.LevelObjects.Templates = objects.Select(o => {
                 var levelObject = new LevelObjectTemplate(lvl.LvlVersion);
+
+                var objectScale = o.transform.localScale;
+                objectScale.z *= -1;
+                o.transform.localScale = objectScale;
 
                 levelObject.Lot = o.Lot;
                 levelObject.ObjectId = objectId++;
                 var position = Utilities.ToNative(o.transform.position);
-                position.X *= -1;
+                //position.Z *= -1;
+                //position.X += 3.2f / 4;
                 levelObject.Position = position;
                 levelObject.Rotation = Utilities.ToNative(o.transform.rotation);
                 levelObject.Scale = o.transform.localScale.x;
                 levelObject.LegoInfo = o.GetDataDictionary();
+                
+                objectScale = o.transform.localScale;
+                objectScale.z *= -1;
+                o.transform.localScale = objectScale;
 
                 return levelObject;
             }).ToArray();
 
+            scale = gameObject.transform.localScale;
+            scale.z *= -1;
+            gameObject.transform.localScale = scale;
+            
             var normalizedLvlName = scene.SceneName.ToLower().Replace(" ", "_");
 
             using var lvlStream = File.Create(Path.Combine(resultPath, $"{nameNormalized}_{normalizedLvlName}.lvl"));
@@ -253,7 +262,7 @@ public class ZoneDetails : MonoBehaviour
 
         var zoneTable = WorkspaceControl.Database["ZoneTable"];
 
-        var zoneEntry = new ZoneTableTable(zoneTable.FirstOrDefault(z => z.Key == _zoneId) ?? zoneTable.Create(_zoneId));
+        var zoneEntry = new ZoneTableTable(zoneTable.FirstOrDefault(z => z.Key == (int) _zoneId) ?? zoneTable.Create(_zoneId));
 
         zoneEntry.zoneName = Path.Combine("death_blow/", nameNormalized + "/", $"{nameNormalized}.luz");
         zoneEntry.ghostdistance_min = _ghostDistanceMin;

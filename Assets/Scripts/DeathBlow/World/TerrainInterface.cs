@@ -94,15 +94,12 @@ namespace DeathBlow.World
 
         public static GameObject Import(TerrainFile terrain)
         {
-            const float scale = 3.125f;
-
-            var color2 = terrain.Chunks[0].Colormap1.Data;
-            var color = terrain.Chunks[0].Colormap1.Data[0];
+            const float scale = 3.2f; //3.125f;
 
             var terrainInstance = new GameObject($"Terrain");
             
-            var centerX = (terrain.Weight - 1) * terrain.Chunks[0].HeightMap.Width / 2;
-            var centerY = (terrain.Height - 1) * terrain.Chunks[0].HeightMap.Height / 2;
+            var centerX = 204.8f / 2;
+            var centerY = -204.8f / 2;
 
             for (var x = 0; x < terrain.Weight; x++)
             {
@@ -169,7 +166,7 @@ namespace DeathBlow.World
 
                     render.material = WorkspaceControl.CurrentWorkspace.TerrainMaterial;
                     
-                    instance.transform.position += new Vector3(x * (chunk.HeightMap.Width - 1), 0, y * (chunk.HeightMap.Height - 1)) * scale;
+                    instance.transform.position += new Vector3(centerX + x * -204.8f + 3.2f / 4, 0, centerY + y * 204.8f);
                     
                     for (var index = 0; index < chunk.Foliage.Count; index++)
                     {
@@ -185,7 +182,7 @@ namespace DeathBlow.World
                 }
             }
             
-            terrainInstance.transform.position = -new Vector3(centerX, 0, centerY) * scale;
+            terrainInstance.transform.position = new Vector3(0, 0, 0); //-new Vector3(centerX, 0, centerY) * scale;
 
             return terrainInstance;
         }

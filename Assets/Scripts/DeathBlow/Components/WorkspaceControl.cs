@@ -94,14 +94,16 @@ namespace DeathBlow.Components
 
                 try
                 {
-                    await Database.SaveAsync(CurrentWorkspace.Database + ".new");
+                    File.Copy(CurrentWorkspace.Database, Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb"));
+                
+                    await Database.SaveAsync(CurrentWorkspace.Database);
                 }
                 catch (Exception e)
                 {
                     Debug.LogError(e);
                     
                     Debug.Log("Failed to save database...");
-                        
+                    
                     SavingDatabase = false;
                     
                     throw;
