@@ -13,7 +13,10 @@ public class TemplateSelector : EditorWindow
     private List<Result> Results { get; set; } = new List<Result>();
 
     public static GameObject Scene { get; set; }
-
+    
+    public int StartIndex { get; set; }
+    
+    public bool Spawner { get; set; }
 
     [MenuItem("Death Blow/Template Selector")]
     public static void Initialize()
@@ -54,15 +57,66 @@ public class TemplateSelector : EditorWindow
             return;
         }
 
+        Spawner = GUILayout.Toggle(Spawner, "Initialize as spawner template");
+        
+        GUILayout.Space(5);
+
         GUILayout.Label("Search:");
 
         var query = GUILayout.TextField(Query);
+        
+        GUILayout.Space(5);
+        
+        GUILayout.BeginHorizontal();
 
-        if (query != Query)
+        var startIndex = StartIndex;
+
+        if (!(startIndex > 0))
         {
+            EditorGUI.BeginDisabledGroup(true);
+        }
+        
+        if (GUILayout.Button("<<"))
+        {
+            startIndex -= 25;
+
+            if (startIndex <= 0) startIndex = 0;
+        }
+        
+        if (!(startIndex > 0))
+        {
+            EditorGUI.EndDisabledGroup();
+        }
+        
+        if (Results.Count != 25)
+        {
+            EditorGUI.BeginDisabledGroup(true);
+        }
+        
+        if (GUILayout.Button(">>"))
+        {
+            startIndex += 25;
+        }
+        
+        if (Results.Count != 25)
+        {
+            EditorGUI.EndDisabledGroup();
+        }
+
+        GUILayout.EndHorizontal();
+
+        if (query != Query || startIndex != StartIndex)
+        {
+            if (query != Query)
+            {
+                StartIndex = 0;
+            }
+            
             Results.Clear();
 
             Query = query;
+
+            StartIndex = startIndex;
 
             query = query.ToLower();
 
@@ -73,6 +127,8 @@ public class TemplateSelector : EditorWindow
                 return;
             }
 
+            var skip = StartIndex;
+            
             foreach (var obj in objects)
             {
                 var name = (string)obj[1].Value;
@@ -84,6 +140,13 @@ public class TemplateSelector : EditorWindow
 
                 if (name.ToLower().Contains(query) || obj.Key.ToString() == query)
                 {
+                    if (skip > 0)
+                    {
+                        --skip;
+                        
+                        continue;
+                    }
+                    
                     var result = new Result
                     {
                         Lot = obj.Key,
@@ -102,31 +165,49 @@ public class TemplateSelector : EditorWindow
 
         foreach (var result in Results)
         {
-            GUILayout.Space(3);
+            GUILayout.Space(5);
             
             if (GUILayout.Button($"[{result.Lot}] {result.Name}"))
             {
-                var template = ObjectInterface.Import(result.Lot, out var error);
+                var details = ImportTemplate(result.Lot, $"[{result.Lot}] {result.Name}");
 
-                if (template == null)
+                if (Spawner)
                 {
-                    Debug.LogError(error);
+                    var spawner = ImportTemplate(176, $"[Spawner] {result.Name}");
 
-                    continue;
+                    spawner.SpawnerTemplate = details.gameObject;
+
+                    details.transform.parent = spawner.transform;
+
+                    details.IsSpawned = true;
+
+                    Selection.activeGameObject = spawner.gameObject;
                 }
 
-                var zoneObject = new GameObject($"[{result.Lot}] {result.Name}");
-
-                var objectDetails = zoneObject.AddOrGetComponent<ObjectDetails>();
-
-                objectDetails.Lot = result.Lot;
-
-                zoneObject.transform.parent = Scene.transform;
-
-                template.transform.parent = zoneObject.transform;
-
-                Close();
+                //Close();
             }
         }
+    }
+
+    public ObjectDetails ImportTemplate(int lot, string objectName)
+    {
+        var template = ObjectInterface.Import(lot, out var error);
+
+        if (template == null)
+        {
+            Debug.LogError(error);
+        }
+
+        var zoneObject = new GameObject(objectName);
+
+        var objectDetails = zoneObject.AddOrGetComponent<ObjectDetails>();
+
+        objectDetails.Lot = lot;
+
+        zoneObject.transform.parent = Scene.transform;
+
+        template.transform.parent = zoneObject.transform;
+
+        return objectDetails;
     }
 }

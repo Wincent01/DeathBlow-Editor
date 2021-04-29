@@ -33,6 +33,11 @@ namespace DeathBlow.Components.Game
             }
         }
 
+        public virtual void OnDetailGizmos(ObjectDetails details)
+        {
+            
+        }
+        
         public virtual void OnDetailGUI(ObjectDetails details)
         {
 

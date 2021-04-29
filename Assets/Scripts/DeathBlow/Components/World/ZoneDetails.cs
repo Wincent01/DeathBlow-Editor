@@ -262,7 +262,9 @@ public class ZoneDetails : MonoBehaviour
 
         var zoneTable = WorkspaceControl.Database["ZoneTable"];
 
-        var zoneEntry = new ZoneTableTable(zoneTable.FirstOrDefault(z => z.Key == (int) _zoneId) ?? zoneTable.Create(_zoneId));
+        var zoneID = (int) _zoneId;
+
+        var zoneEntry = new ZoneTableTable(zoneTable.FirstOrDefault(z => z.Key == zoneID) ?? zoneTable.Create(_zoneId));
 
         zoneEntry.zoneName = Path.Combine("death_blow/", nameNormalized + "/", $"{nameNormalized}.luz");
         zoneEntry.ghostdistance_min = _ghostDistanceMin;

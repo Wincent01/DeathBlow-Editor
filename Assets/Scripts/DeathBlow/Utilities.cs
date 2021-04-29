@@ -78,6 +78,8 @@ namespace DeathBlow
 
         public static string HostPath(string path) => path == null ? "" : path.Replace("\\\\", "\\").Replace('\\', '/');
 
+        public static string ClientPath(string path) => path == null ? "" : path.Replace("/", "\\");
+
         public static string AssetProperty(string fieldName, string value, string relativeTo = "", AssetPropertySettings settings = AssetPropertySettings.Default)
         {
             GUILayout.Space(5);
@@ -137,7 +139,34 @@ namespace DeathBlow
         public static Vector3 ToUnity(System.Numerics.Vector3 value) => new Vector3(value.X, value.Y, value.Z);
 
         public static Quaternion ToUnity(System.Numerics.Quaternion value) => new Quaternion(value.X, value.Y, value.Z, value.W);
+        
+        public static Vector3 Parabola(Vector3 start, Vector3 end, float height, float t)
+        {
+            Func<float, float> f = x => -4 * height * x * x + 4 * height * x;
 
+            var mid = Vector3.Lerp(start, end, t);
+
+            return new Vector3(mid.x, f(t) + Mathf.Lerp(start.y, end.y, t), mid.z);
+        }
+
+        public static Vector2 Parabola(Vector2 start, Vector2 end, float height, float t)
+        {
+            Func<float, float> f = x => -4 * height * x * x + 4 * height * x;
+
+            var mid = Vector2.Lerp(start, end, t);
+
+            return new Vector2(mid.x, f(t) + Mathf.Lerp(start.y, end.y, t));
+        }
+        
+        public static Vector3 ToGameSpace(Vector3 value)
+        {
+            var gameSpace = value;
+            
+            gameSpace.z *= -1;
+
+            return gameSpace;
+        }
+        
         public static void GizmosDrawString(string text, Vector3 worldPos, Color? colour = null)
         {
             Handles.BeginGUI();

@@ -44,7 +44,7 @@ namespace DeathBlow.Components.Game
 
             if (entry == null && !string.IsNullOrWhiteSpace(value))
             {
-                entry = details.CreateEntry("custom_script_server", ObjectDataType.UTF16, value, true);
+                entry = details.SetEntry("custom_script_server", ObjectDataType.UTF16, value, true);
             }
             else if (entry != null)
             {

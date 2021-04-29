@@ -94,7 +94,11 @@ namespace DeathBlow.Components
 
                 try
                 {
-                    File.Copy(CurrentWorkspace.Database, Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb"));
+                    var oldFile = Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb");
+                    if (!File.Exists(oldFile))
+                    {
+                        File.Copy(CurrentWorkspace.Database, oldFile);
+                    }
                 
                     await Database.SaveAsync(CurrentWorkspace.Database);
                 }

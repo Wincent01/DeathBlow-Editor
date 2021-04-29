@@ -46,7 +46,7 @@ namespace DeathBlow.Components.Game
 
             if (entry == null && !string.IsNullOrWhiteSpace(value))
             {
-                entry = details.CreateEntry("spawntemplate", ObjectDataType.Int32, value, false);
+                entry = details.SetEntry("spawntemplate", ObjectDataType.Int32, value, false);
             }
             else if (entry != null)
             {
@@ -61,7 +61,7 @@ namespace DeathBlow.Components.Game
 
             if (entry == null && !string.IsNullOrWhiteSpace(value))
             {
-                entry = details.CreateEntry("respawn", ObjectDataType.Float32, value, false);
+                entry = details.SetEntry("respawn", ObjectDataType.Float32, value, false);
             }
             else if (entry != null)
             {

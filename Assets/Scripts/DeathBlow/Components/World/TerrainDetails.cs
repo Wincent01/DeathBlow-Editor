@@ -245,7 +245,8 @@ public class TerrainDetails : MonoBehaviour
                         }
                         */
 
-                        var index = (x * 6) * width + (y * 6);
+                        var index = ((x) * 6) * width + ((y) * 6);
+                        if (index < 0 || index >= verticies.Length) continue;
                         var value = verticies[index].y;
                         var sourceColor = colors[(x * 6) * width + (y * 6)];
                         var color = NativeColor.FromArgb((int) sourceColor.a, (int) sourceColor.r, (int) sourceColor.g, (int) sourceColor.b);
@@ -463,6 +464,31 @@ public class TerrainDetails : MonoBehaviour
                             any = true;
 
                             vertices[j] = vertex;
+                        }
+                    }
+
+                    if (_mode == EditMode.Smooth)
+                    {
+                        var avg = total / selected.Count;
+                        
+                        foreach (var selectedIndex in selected)
+                        {
+                            var vertex = vertices[selectedIndex];
+
+                            var a = localToWorld.MultiplyPoint3x4(vertex);
+                            var b = hit.point;
+
+                            a.y = b.y;
+
+                            var distance = Vector3.Distance(a, b);
+
+                            var multiplier = (float) (1 / (Math.Pow(_smoothFactor, distance) + 1));
+
+                            var power = _power * multiplier;
+
+                            vertex.y = MoveTowards(vertex.y, (avg + vertex.y) / 2, power);
+
+                            vertices[selectedIndex] = vertex;
                         }
                     }
 
