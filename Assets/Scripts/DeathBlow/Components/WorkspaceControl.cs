@@ -92,9 +92,16 @@ namespace DeathBlow.Components
             {
                 Debug.Log("Saving database...");
 
+                var oldFile = Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb");
+                                
+                Debug.Log($"Saving sql... [{SqlOutput.Count}]");
+                
+                File.WriteAllLines(CurrentWorkspace.Database + ".sql", SqlOutput.ToArray());
+                
+                Debug.Log("Finished saving sql...");
+
                 try
                 {
-                    var oldFile = Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb");
                     if (!File.Exists(oldFile))
                     {
                         File.Copy(CurrentWorkspace.Database, oldFile);
@@ -114,12 +121,8 @@ namespace DeathBlow.Components
                 }
 
                 Debug.Log("Finished saving database...");
-                
-                Debug.Log($"Saving sql... [{SqlOutput.Count}]");
-                
-                File.WriteAllLines(CurrentWorkspace.Database + ".sql", SqlOutput.ToArray());
-                
-                Debug.Log("Finished saving sql...");
+
+                SqlOutput.Clear();
                 
                 SavingDatabase = false;
             });
@@ -168,7 +171,16 @@ namespace DeathBlow.Components
 
                 try
                 {
-                    Database = await AccessDatabase.OpenAsync(CurrentWorkspace.Database);
+                    var oldFile = Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb");
+
+                    if (File.Exists(oldFile))
+                    {
+                        Database = await AccessDatabase.OpenAsync(oldFile);
+                    }
+                    else
+                    {
+                        Database = await AccessDatabase.OpenAsync(CurrentWorkspace.Database);
+                    }
                 }
                 catch (Exception e)
                 {

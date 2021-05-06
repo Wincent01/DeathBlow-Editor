@@ -8,10 +8,12 @@ using UnityEditor;
 using InfectedRose.Terrain;
 using System.Linq;
 using System.IO;
+using System.Numerics;
 using RakDotNet.IO;
 using UnityEngine.EventSystems;
 using DeathBlow;
 using NativeColor = System.Drawing.Color;
+using Vector3 = UnityEngine.Vector3;
 
 [CustomEditor(typeof(TerrainDetails))]
 public class TerrainDetailsEditor : Editor
@@ -32,6 +34,7 @@ public class TerrainDetailsEditor : Editor
         var colorProperty = serializedObject.FindProperty("_color");
         var modeProperty = serializedObject.FindProperty("_mode");
         var setHeightProperty = serializedObject.FindProperty("_setHeight");
+        var sourceTerrainFile = serializedObject.FindProperty("_sourceTerrainFile");
 
         EditorGUI.BeginDisabledGroup(true);
         EditorGUILayout.PropertyField(terrainProperty);
@@ -68,6 +71,11 @@ public class TerrainDetailsEditor : Editor
         {
             terrainDetails.Export();
         }
+        
+        GUILayout.Space(5);
+        GUILayout.Label("Debug");
+
+        EditorGUILayout.PropertyField(sourceTerrainFile);
 
         serializedObject.ApplyModifiedProperties();
     }
@@ -107,6 +115,8 @@ public class TerrainDetails : MonoBehaviour
     [SerializeField] private Color _color;
 
     [SerializeField] private float _setHeight;
+
+    [SerializeField] public string _sourceTerrainFile;
 
     public TerrainEditor Editor { get; set; }
 
@@ -162,6 +172,7 @@ public class TerrainDetails : MonoBehaviour
 
         terrain.HeightLayer.LoadHeightMap();
         //terrain.ColorLayer.LoadColorMap();
+        //terrain.SecondColorLayer.LoadColorMap();
 
         var maxWidth = terrain.Source.Weight * 64;
 
@@ -177,12 +188,13 @@ public class TerrainDetails : MonoBehaviour
                 var terrainChunk = source.Chunks[chunkX * source.Weight + chunkY];
 
                 terrainChunk.ColorRelatedArray = Enumerable.Repeat((byte) 0, 1024).ToArray(); //new byte[1024];
-                terrainChunk.Colormap0.Size = 32;
+                terrainChunk.Colormap0.Size = 64;
                 terrainChunk.Colormap0.Data = Enumerable.Repeat(/*System.Drawing.Color.FromArgb(255, 82, 18, 18)*/
-                                System.Drawing.Color.FromArgb(255, 0, 0, 0), 32 * 32).ToArray();
-                terrainChunk.Colormap1.Size = 128;
-                terrainChunk.Colormap1.Data = Enumerable.Repeat(NativeColor.FromArgb(255, 0, 0, 0), 128 * 128).ToArray();
-                terrainChunk.TextureSetting = 1;
+                                System.Drawing.Color.FromArgb(127, 127, 8, 0), 64 * 64).ToArray();
+                terrainChunk.Colormap1.Size = 64;
+                terrainChunk.Colormap1.Data = Enumerable.Repeat(NativeColor.FromArgb(127, 127, 127, 127), 64 * 64).ToArray();
+                terrainChunk.TextureSetting = 15;
+                terrainChunk.HeightMap.TexturePallet = new int[4] {1, 1, 38, 1}; // {75, 76, 38, 19} FV;
                 terrainChunk.UnknownByteArray1 = new byte[32];
                 for (var i = 0; i < 32; i += 2)
                 {
@@ -204,9 +216,8 @@ public class TerrainDetails : MonoBehaviour
                 {
                     terrainChunk.Blendmap.Data = File.ReadAllBytes(_blendmap);
                 }
-                /*
-                terrainChunk.ShortMap.Data = new short[4225];
-                terrainChunk.ShortMap.Data[0] = -1;*/
+                
+                //terrainChunk.ShortMap.Data = new short[4225];
 
                 var mesh = chunk.sharedMesh;
 
@@ -250,8 +261,20 @@ public class TerrainDetails : MonoBehaviour
                         var value = verticies[index].y;
                         var sourceColor = colors[(x * 6) * width + (y * 6)];
                         var color = NativeColor.FromArgb((int) sourceColor.a, (int) sourceColor.r, (int) sourceColor.g, (int) sourceColor.b);
+                        //terrainChunk.Colormap0.Data[x * width + y] = color;
+                        //terrainChunk.Colormap1.Data[x * width + y] = color;
+                        //terrainChunk.Colormap1.Data[x * width + y] = color;
 
+                        //terrain.ColorLayer.SetColor(new System.Numerics.Vector2(width - (x / 2) + (chunkX * 32),  (y / 2) + (chunkY * 32)), color);
                         terrain.HeightLayer.SetHeight(new System.Numerics.Vector2(width - (x + 1) + (chunkX * 64),  (y) + (chunkY * 64)), value);
+                        /*try
+                        {
+                            terrain.SecondColorLayer.SetColor(new System.Numerics.Vector2(width - (x + 1) + (chunkX * 64),  (y) + (chunkY * 64)), color);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.Log($"{x} / {y} => {width - (x + 1) + (chunkX * 64)} / {(y) + (chunkY * 64)}");
+                        }*/
 
                         /*
                         if (x == 63)
@@ -296,6 +319,33 @@ public class TerrainDetails : MonoBehaviour
                 }
 
                 //terrainChunk.HeightMap.Data = heights;
+                
+                /*if (File.Exists(_sourceTerrainFile))
+                {
+                    using var sourceStream = File.OpenRead(_sourceTerrainFile);
+                    using var sourceReader = new BitReader(sourceStream);
+                    
+                    var sourceFile = new TerrainFile();
+                    sourceFile.Deserialize(sourceReader);
+
+                    var sourceChunk = sourceFile.Chunks[45];
+
+                    terrainChunk.Colormap0 = sourceChunk.Colormap0;
+                    terrainChunk.Colormap1 = sourceChunk.Colormap1;
+                    terrainChunk.Blendmap = sourceChunk.Blendmap;
+                    terrainChunk.Lightmap = sourceChunk.Lightmap;
+                    terrainChunk.ColorRelatedArray = sourceChunk.ColorRelatedArray;
+                    terrainChunk.ShortMap = sourceChunk.ShortMap;
+                    terrainChunk.UnknownByteArray1 = sourceChunk.UnknownByteArray1;
+                    terrainChunk.UnknownShortArray = sourceChunk.UnknownShortArray;
+                    terrainChunk.HeightMap = sourceChunk.HeightMap;
+                    terrainChunk.HeightMap.PositionX = 0;
+                    terrainChunk.HeightMap.PositionY = 0;
+                    terrainChunk.Foliage = sourceChunk.Foliage;
+                    terrainChunk.TextureSetting = sourceChunk.TextureSetting;
+
+                    Debug.Log($"Using source terrain file: {terrainChunk.TextureSetting}");
+                }*/
             }
         }
 
@@ -313,6 +363,7 @@ public class TerrainDetails : MonoBehaviour
 
         terrain.HeightLayer.ApplyHeightMap();
         //terrain.ColorLayer.ApplyColorMap();
+        //terrain.SecondColorLayer.ApplyColorMap();
 
         using var stream = File.Create("./tmp.raw");
 

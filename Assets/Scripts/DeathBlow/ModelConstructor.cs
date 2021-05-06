@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DeathBlow.Components;
 using InfectedRose.Nif;
@@ -22,6 +23,8 @@ namespace DeathBlow
         public bool CreatePrefab { get; set; }
         
         public string PrefabPath { get; set; }
+        
+        public bool LoadTextures { get; set; }
 
         public Dictionary<NiAVObject, Transform> Nodes { get; set; } = new Dictionary<NiAVObject, Transform>();
 
@@ -414,6 +417,11 @@ namespace DeathBlow
 
         public void ApplyTexturing(NiTexturingProperty property, GameObject parent)
         {
+            if (!LoadTextures)
+            {
+                return;
+            }
+            
             var renderer = parent.GetComponent<Renderer>();
 
             if (renderer == null)
@@ -435,6 +443,8 @@ namespace DeathBlow
                     
                     try
                     {
+                        Debug.Log($"Searching for texture: {NifPath} / {source.FileName.Get(File)}");
+                        
                         contents = ResourceUtilities.ReadFrom(NifPath, source.FileName.Get(File));
                     }
                     catch (Exception e)
@@ -460,18 +470,35 @@ namespace DeathBlow
                             throw new ArgumentOutOfRangeException();
                     }
 
-                    texture.name = source.Name.Get(File);
+                    texture.name = source.FileName.Get(File);
 
+                    var texturePath = Path.Combine(
+                                    WorkspaceControl.CurrentWorkspace.AssetTexturesPath,
+                                    Path.GetFileNameWithoutExtension(texture.name) + ".asset"
+                    );
+                    
+                    Debug.Log(texturePath);
+                    
+                    AssetDatabase.CreateAsset(texture, texturePath);
+                    
                     var mat = new Material(WorkspaceControl.CurrentWorkspace.NormalMaterial)
                     {
                         name = texture.name
                     };
 
-                    renderer.sharedMaterial = mat;
+                    var materialPath = Path.Combine(
+                                    WorkspaceControl.CurrentWorkspace.AssetMaterialsPath,
+                                    Path.GetFileNameWithoutExtension(texture.name) + ".mat"
+                    );
 
-                    renderer.sharedMaterial.mainTexture = texture;
+                    mat.mainTexture = texture;
+                    mat.SetTextureScale(Shader.PropertyToID("_MainTex"), new Vector2(1, -1));
+                    
+                    Debug.Log(materialPath);
 
-                    renderer.sharedMaterial.SetTextureScale(Shader.PropertyToID("_MainTex"), new Vector2(1, -1));
+                    AssetDatabase.CreateAsset(mat, materialPath);
+
+                    renderer.sharedMaterial = (Material) AssetDatabase.LoadAssetAtPath(materialPath, typeof(Material));
                 }
             }
         }

@@ -32,6 +32,12 @@ namespace DeathBlow.Workspace
         [SerializeField]
         private string _assetObjectsPath;
         
+        [SerializeField]
+        private string _assetMaterialsPath;
+        
+        [SerializeField]
+        private string _assetTexturesPath;
+
         public string WorkspaceName
         {
             get => _workspaceName;
@@ -84,6 +90,18 @@ namespace DeathBlow.Workspace
         {
             get => _assetObjectsPath;
             set => _assetObjectsPath = value;
+        }
+
+        public string AssetMaterialsPath
+        {
+            get => _assetMaterialsPath;
+            set => _assetMaterialsPath = value;
+        }
+
+        public string AssetTexturesPath
+        {
+            get => _assetTexturesPath;
+            set => _assetTexturesPath = value;
         }
     }
 }

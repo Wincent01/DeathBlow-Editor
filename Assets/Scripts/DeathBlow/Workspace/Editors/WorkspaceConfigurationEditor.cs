@@ -73,10 +73,14 @@ namespace DeathBlow.Workspace.Editors
             var assetPathProperty = serializedObject.FindProperty("_assetPath");
             var assetModelsPathProperty = serializedObject.FindProperty("_assetModelsPath");
             var assetObjectsPathProperty = serializedObject.FindProperty("_assetObjectsPath");
+            var assetMaterialsPathProperty = serializedObject.FindProperty("_assetMaterialsPath");
+            var assetTexturesPathProperty = serializedObject.FindProperty("_assetTexturesPath");
 
             EditorGUILayout.PropertyField(assetPathProperty);
             EditorGUILayout.PropertyField(assetModelsPathProperty);
             EditorGUILayout.PropertyField(assetObjectsPathProperty);
+            EditorGUILayout.PropertyField(assetMaterialsPathProperty);
+            EditorGUILayout.PropertyField(assetTexturesPathProperty);
             
             GUILayout.Space(SpaceSize);
             GUILayout.Label("Model configuration:", EditorStyles.boldLabel);

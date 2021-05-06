@@ -167,6 +167,22 @@ namespace DeathBlow
             return gameSpace;
         }
         
+        public static (Vector3 position, Quaternion rotation) ToGameSpace(Transform value)
+        {
+            var objectScale = value.localScale;
+            objectScale.z *= -1;
+            value.localScale = objectScale;
+
+            var position = value.position;
+            var rotation = value.rotation;
+            
+            objectScale = value.localScale;
+            objectScale.z *= -1;
+            value.localScale = objectScale;
+
+            return (position, rotation);
+        }
+        
         public static void GizmosDrawString(string text, Vector3 worldPos, Color? colour = null)
         {
             Handles.BeginGUI();

@@ -141,6 +141,8 @@ namespace DeathBlow.World
             
             zone.Deserialize(reader);
 
+            return null;
+
             var zoneInstance = new GameObject($"Zone {Path.GetFileName(workingFile)}");
 
             var zoneDetails = zoneInstance.AddOrGetComponent<ZoneDetails>();

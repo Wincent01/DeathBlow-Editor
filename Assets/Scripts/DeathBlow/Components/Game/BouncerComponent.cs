@@ -31,7 +31,7 @@ namespace DeathBlow.Components.Game
             
             for (var t = 0.0f; t <= 1.1f; t += 0.1f)
             {
-                var partB = Utilities.Parabola(start, end, 10, t);
+                var partB = Utilities.Parabola(start, end, Math.Abs(start.y - end.y), t);
                 
                 Gizmos.DrawLine(partA, partB);
 
@@ -61,6 +61,10 @@ namespace DeathBlow.Components.Game
             details.SimpleDataSelector(ObjectDataType.Float32, "bouncer_speed", "Bouncer Speed");
             
             details.SimpleDataSelector(ObjectDataType.Boolean, "bouncer_uses_high_arc", "Bouncer Uses High Arc");
+            
+            details.SimpleDataSelector(ObjectDataType.Boolean, "lock_controls", "Lock Controls");
+
+            details.SimpleDataSelector(ObjectDataType.Boolean, "stickLanding", "Stick Landing");
 
             CachedDestinationReference = destinationReference;
 

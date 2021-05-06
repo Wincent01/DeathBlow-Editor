@@ -13,7 +13,7 @@ namespace DeathBlow
         {
             file = file.ToLower();
 
-            if (File.Exists(Path.Combine(source, file)))
+            if (source != null && File.Exists(Path.Combine(source, file)))
             {
                 return File.ReadAllBytes(Path.Combine(source, file));
             }

@@ -111,6 +111,11 @@ public class ObjectDetailsEditor : Editor
 
         GUILayout.Label("Data entries:");
 
+        if (GUILayout.Button("Log data"))
+        {
+            Debug.Log(objectDetails.GetDataDictionary().ToString());
+        }
+
         var dataProperty = serializedObject.FindProperty("_data");
 
         EditorGUILayout.PropertyField(dataProperty);
@@ -234,7 +239,7 @@ public class ObjectDetails : MonoBehaviour
         {
             case ObjectDataType.UTF8:
             case ObjectDataType.UTF16:
-                value = EditorGUILayout.TextField(value, title ?? key);
+                value = EditorGUILayout.TextField(title ?? key, value);
                 break;
             case ObjectDataType.UInt32:
             case ObjectDataType.Int32:
@@ -289,7 +294,22 @@ public class ObjectDetails : MonoBehaviour
     {
         var dictionary = new LegoDataDictionary();
 
-        foreach (var entry in _data)
+        var entries = _data.ToList();
+
+        if (_spawnerTemplate != null)
+        {
+            var details = _spawnerTemplate.GetComponent<ObjectDetails>();
+            
+            if (details != null)
+            {
+                foreach (var entry in details._data)
+                {
+                    entries.Add(entry);
+                }
+            }
+        }
+
+        foreach (var entry in entries)
         {
             var value = entry.Value;
             object dataValue;
@@ -329,19 +349,6 @@ public class ObjectDetails : MonoBehaviour
             }
 
             dictionary.Add(entry.Key, dataValue, (byte) entry.Type);
-        }
-
-        if (_spawnerTemplate != null)
-        {
-            var details = _spawnerTemplate.GetComponent<ObjectDetails>();
-
-            if (details != null)
-            {
-                foreach (var pair in details.GetDataDictionary())
-                {
-                    dictionary[pair.Key] = pair.Value;
-                }
-            }
         }
 
         return dictionary;

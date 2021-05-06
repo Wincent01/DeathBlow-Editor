@@ -1,13 +1,11 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System;
+using UnityEngine;
+using System.Collections.Generic;
 using UnityEditor;
 using DeathBlow;
 using InfectedRose.Luz;
 using InfectedRose.Lvl;
-using InfectedRose.Terrain;
 using System.Linq;
-using InfectedRose.Terrain.Editing;
-using System.Threading.Tasks;
 using DeathBlow.Components;
 using System.IO;
 using RakDotNet.IO;
@@ -133,6 +131,10 @@ public class ZoneDetails : MonoBehaviour
         luz.TerrainFileName = terrainFile;
         luz.TerrainFile = terrainFile;
 
+        var scale = gameObject.transform.localScale;
+        scale.z *= -1;
+        gameObject.transform.localScale = scale;
+
         foreach (var scene in scenes)
         {
             var lvl = new LvlFile();
@@ -208,10 +210,6 @@ public class ZoneDetails : MonoBehaviour
 
             var objectId = 3696899ul;
 
-            var scale = gameObject.transform.localScale;
-            scale.z *= -1;
-            gameObject.transform.localScale = scale;
-
             lvl.LevelObjects.Templates = objects.Select(o => {
                 var levelObject = new LevelObjectTemplate(lvl.LvlVersion);
 
@@ -236,10 +234,6 @@ public class ZoneDetails : MonoBehaviour
                 return levelObject;
             }).ToArray();
 
-            scale = gameObject.transform.localScale;
-            scale.z *= -1;
-            gameObject.transform.localScale = scale;
-            
             var normalizedLvlName = scene.SceneName.ToLower().Replace(" ", "_");
 
             using var lvlStream = File.Create(Path.Combine(resultPath, $"{nameNormalized}_{normalizedLvlName}.lvl"));
@@ -247,6 +241,111 @@ public class ZoneDetails : MonoBehaviour
 
             lvl.Serialize(lvlWriter);
         }
+        
+        var paths = GetComponentsInChildren<PathDetails>();
+
+        var pathData = new List<LuzPathData>();
+        
+        foreach (var path in paths)
+        {
+            LuzPathData data = null;
+            
+            switch (path.Type)
+            {
+                case PathType.Movement:
+                    break;
+                case PathType.MovingPlatform:
+                    var movingPlatformPath = new LuzMovingPlatformPath(18);
+
+                    data = movingPlatformPath;
+                    break;
+                case PathType.Property:
+                    break;
+                case PathType.Camera:
+                    break;
+                case PathType.Spawner:
+                    break;
+                case PathType.Showcase:
+                    break;
+                case PathType.Race:
+                    break;
+                case PathType.Rail:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            if (data == null)
+            {
+                continue;
+            }
+
+            data.PathName = path.PathName;
+            data.Behavior = path.Behavior;
+
+            var parts = path.GetComponentsInChildren<WaypointDetails>();
+
+            var waypoints = new List<LuzPathWaypoint>();
+
+            foreach (var part in parts)
+            {
+                LuzPathWaypoint waypoint = null;
+
+                switch (path.Type)
+                {
+                    case PathType.Movement:
+                        break;
+                    case PathType.MovingPlatform:
+                        var movingPlatformWaypoint = new LuzMovingPlatformWaypoint(18);
+
+                        var (waypointPosition, waypointRotation) = Utilities.ToGameSpace(part.transform);
+
+                        movingPlatformWaypoint.Position = Utilities.ToNative(waypointPosition);
+                        movingPlatformWaypoint.Rotation = Utilities.ToNative(waypointRotation);
+                        movingPlatformWaypoint.Speed = part.Speed;
+                        movingPlatformWaypoint.Wait = part.Wait;
+                        movingPlatformWaypoint.LockPlayer = part.LockPlayer;
+                        movingPlatformWaypoint.ArriveSound = "";
+                        movingPlatformWaypoint.DepartSound = "";
+
+                        waypoint = movingPlatformWaypoint;
+                        break;
+                    case PathType.Property:
+                        break;
+                    case PathType.Camera:
+                        break;
+                    case PathType.Spawner:
+                        break;
+                    case PathType.Showcase:
+                        break;
+                    case PathType.Race:
+                        break;
+                    case PathType.Rail:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                if (waypoint == null)
+                {
+                    continue;
+                }
+                
+                waypoints.Add(waypoint);
+            }
+
+            data.Type = path.Type;
+
+            data.Waypoints = waypoints.ToArray();
+
+            pathData.Add(data);
+        }
+
+        luz.PathData = pathData.ToArray();
+
+        scale = gameObject.transform.localScale;
+        scale.z *= -1;
+        gameObject.transform.localScale = scale;
 
         using var luzStream = File.Create(Path.Combine(resultPath, $"{nameNormalized}.luz"));
         using var luzWriter = new BitWriter(luzStream);

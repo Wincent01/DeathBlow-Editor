@@ -9,12 +9,24 @@ namespace DeathBlow.Components.Game
     {
         public override void OnInspectorGUI()
         {
+            if (!WorkspaceControl.Ok)
+            {
+                GUILayout.Label("Workspace not loaded.");
+                
+                return;
+            }
+            
+            var gameTemplate = (GameTemplate) serializedObject.targetObject;
+            
+            if (GUILayout.Button("Generate ID"))
+            {
+                gameTemplate.Lot = WorkspaceControl.Database["Objects"].ClaimKey(100000);
+            }
+            
             base.OnInspectorGUI();
 
             if (GUILayout.Button("Save"))
             {
-                var gameTemplate = (GameTemplate) serializedObject.targetObject;
-                
                 gameTemplate.Save();
             }
         }

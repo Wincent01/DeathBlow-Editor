@@ -166,7 +166,7 @@ namespace DeathBlow.World
 
                     render.material = WorkspaceControl.CurrentWorkspace.TerrainMaterial;
                     
-                    instance.transform.position += new Vector3(centerX + x * -204.8f + 3.2f / 4, 0, centerY + y * 204.8f);
+                    instance.transform.position += new Vector3(centerX + x * 204.8f + 3.2f / 4, 0, centerY + y * 204.8f);
                     
                     for (var index = 0; index < chunk.Foliage.Count; index++)
                     {

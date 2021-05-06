@@ -5,6 +5,7 @@ using InfectedRose.Nif;
 using RakDotNet.IO;
 using UnityEditor;
 using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DeathBlow.Components.Game
 {
@@ -122,26 +123,57 @@ namespace DeathBlow.Components.Game
             if (_renderAsset != null)
             {
                 _renderAsset = _renderAsset.Replace("\\\\", "\\").Replace('\\', '/');
+                
+                var renderAsset = _renderAsset;
 
-                if (Path.GetExtension(_renderAsset) != ".nif")
+                FileStream stream = null;
+                string directory = null;
+
+                if (Path.GetExtension(renderAsset) == ".kfm")
                 {
+                    foreach (var file in Directory.GetFiles(
+                                    WorkspaceControl.CurrentWorkspace.WorkingRoot,
+                                    Path.GetFileNameWithoutExtension(renderAsset) + ".nif*",
+                                    SearchOption.AllDirectories)
+                    )
+                    {
+                        renderAsset = file;
+
+                        directory = Path.GetDirectoryName(file);
+                        
+                        Debug.Log($"Found NIF from KFM: {file}");
+
+                        stream = File.OpenRead(renderAsset);
+                        
+                        break;
+                    }
+                }
+                else if (Path.GetExtension(renderAsset) == ".nif")
+                {   
+                    directory = Path.GetDirectoryName(renderAsset.ToLower());
+
+                    stream = Utilities.OpenAssetStreamRead(renderAsset.ToLower());
+                }
+                else
+                {
+                    Debug.Log($"Unknown render file {renderAsset} format");
+                    
                     return;
                 }
                 
-                using var steam = Utilities.OpenAssetStreamRead(_renderAsset.ToLower());
+                if (stream == null) throw new FileNotFoundException($"{renderAsset}");
                 
-                if (steam == null) throw new FileNotFoundException($"{_renderAsset}");
-                
-                using var reader = new BitReader(steam);
+                using var reader = new BitReader(stream);
                 
                 var nif = new NiFile();
                 nif.Deserialize(reader);
                 nif.ReadBlocks(reader);
                 
                 var constructor = new ModelConstructor();
-
+                
+                constructor.NifPath = directory;
                 constructor.File = nif;
-                constructor.Name = Path.GetFileNameWithoutExtension(_renderAsset);
+                constructor.Name = Path.GetFileNameWithoutExtension(renderAsset);
                 constructor.CreatePrefab = true;
                 constructor.PrefabPath = Path.Combine(
                                 WorkspaceControl.CurrentWorkspace.AssetModelsPath,
@@ -152,7 +184,11 @@ namespace DeathBlow.Components.Game
 
                 root.transform.parent = transform;
 
+                root.transform.localPosition = Vector3.zero;
+
                 _renderGameObject = root;
+                
+                stream.Dispose();
             }
         }
     }
