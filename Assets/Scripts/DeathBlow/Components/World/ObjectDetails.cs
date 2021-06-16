@@ -9,6 +9,7 @@ using DeathBlow.Components.Game;
 using System.Linq;
 using DeathBlow;
 using DeathBlow.Components.Editors;
+using InfectedRose.Core;
 using Object = UnityEngine.Object;
 
 public enum ObjectDataType

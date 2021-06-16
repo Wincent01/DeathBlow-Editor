@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Default
   m_EditorClassIdentifier: 
   _workspaceName: Special
-  _workingRoot: /mnt/MainDisk/LEGO Universe/LCDR Unpacked/res
-  _database: /mnt/MainDisk/LEGO Universe/LCDR Unpacked/res/cdclient.fdb
+  _workingRoot: 
+  _database: 
   _vertexMaterial: {fileID: 2100000, guid: 272f8d89d7bfcfc40a47153f49d9e553, type: 2}
   _normalMaterial: {fileID: 2100000, guid: e8aa4906e819548f6865e54ff0db1b02, type: 2}
   _terrainMaterial: {fileID: 2100000, guid: 72f31339d31221022be3c123772ccbd2, type: 2}
