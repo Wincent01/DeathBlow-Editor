@@ -123,6 +123,8 @@ namespace DeathBlow.World
 
                     instance.transform.parent = terrainInstance.transform;
                     
+                    Debug.Log("Scale: " + chunk.HeightMap.ScaleFactor);
+                    
                     var mesh = new Mesh();
                     
                     mesh.vertices = triangles.SelectMany(t => t.ToArray.Select(v => new Vector3(v.X, v.Y, v.Z)).ToArray()).ToArray();
@@ -165,8 +167,8 @@ namespace DeathBlow.World
                     var render = instance.AddComponent<MeshRenderer>();
 
                     render.material = WorkspaceControl.CurrentWorkspace.TerrainMaterial;
-                    
-                    instance.transform.position += new Vector3(centerX + x * 204.8f + 3.2f / 4, 0, centerY + y * 204.8f);
+
+                    instance.transform.position = new Vector3(chunk.HeightMap.PositionY, 0, chunk.HeightMap.PositionX); //+= new Vector3(centerX + x * 204.8f + 3.2f / 4, 0, centerY + y * 204.8f);
                     
                     for (var index = 0; index < chunk.Foliage.Count; index++)
                     {
@@ -182,7 +184,8 @@ namespace DeathBlow.World
                 }
             }
             
-            terrainInstance.transform.position = new Vector3(0, 0, 0); //-new Vector3(centerX, 0, centerY) * scale;
+            terrainInstance.transform.position = new Vector3(centerX, 0, centerY); //-new Vector3(centerX, 0, centerY) * scale;
+            terrainInstance.transform.localEulerAngles = new Vector3(0, 90, 0);
 
             return terrainInstance;
         }

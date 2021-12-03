@@ -120,7 +120,7 @@ namespace DeathBlow
 
             var stream = File.OpenRead(Model);
 
-            var reader = new BitReader(stream);
+            var reader = new ByteReader(stream);
 
             var nif = new NiFile();
 

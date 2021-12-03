@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DeathBlow.Components;
+using DeathBlow.Components.Game;
 using InfectedRose.Luz;
 using InfectedRose.Lvl;
 using InfectedRose.Terrain;
@@ -141,8 +143,6 @@ namespace DeathBlow.World
             
             zone.Deserialize(reader);
 
-            return null;
-
             var zoneInstance = new GameObject($"Zone {Path.GetFileName(workingFile)}");
 
             var zoneDetails = zoneInstance.AddOrGetComponent<ZoneDetails>();
@@ -194,36 +194,166 @@ namespace DeathBlow.World
                 
                 if (lvl.LevelObjects == null) continue;
 
-                foreach (var template in lvl.LevelObjects.Templates)
+                foreach (var info in lvl.LevelObjects.Templates)
                 {
-                    GameObject lwoObject;
-                    
-                    try
-                    {
-                        lwoObject = ObjectInterface.Import(template.Lot, out var error);
+                    Transform root = null;
+                    ObjectDetails details = null;
 
-                        if (lwoObject == null)
-                        {
-                            Debug.LogError(error);
+                    if (info.Lot == 176)
+                    {
+                        var spawnTemplate = (int) info.LegoInfo["spawntemplate"];
                         
+                        var spawner = ImportTemplate(sceneInstance.transform, 176, $"[Spawner] {spawnTemplate}");
+                        
+                        details = ImportTemplate(sceneInstance.transform, spawnTemplate, $"[{spawnTemplate}]");
+
+                        spawner.SpawnerTemplate = details.gameObject;
+
+                        details.transform.parent = spawner.transform;
+
+                        details.IsSpawned = true;
+
+                        spawner.SetEntry("spawntemplate", ObjectDataType.Int32, info.Lot.ToString());
+                        spawner.SetEntry("respawn", ObjectDataType.Float32, info.LegoInfo.TryGetValue("respawn", out var respawn) ? respawn.ToString() : "0");
+
+                        root = spawner.transform;
+                    }
+                    else
+                    {
+                        details = ImportTemplate(sceneInstance.transform, info.Lot, $"[{info.Lot}]");
+
+                        root = details.transform;
+                    }
+
+                    root.localScale = new Vector3(info.Scale, info.Scale, info.Scale);
+
+                    foreach (var pair in info.LegoInfo)
+                    {
+                        if (pair.Key == "spawntemplate" || pair.Key == "respawn")
+                        {
                             continue;
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e);
                         
-                        continue;
+                        var value = pair.Value;
+                        
+                        var type = value switch
+                        {
+                            int _ => 1,
+                            float _ => 3,
+                            double _ => 4,
+                            uint _ => 5,
+                            bool _ => 7,
+                            long _ => 8,
+                            byte[] _ => 13,
+                            _ => 0
+                        };
+
+                        details.SetEntry(pair.Key, (ObjectDataType) type, value.ToString());
                     }
 
-                    lwoObject.transform.parent = sceneInstance.transform;
+                    root.position = new Vector3(info.Position.X, info.Position.Y, info.Position.Z);
+                    root.rotation = new Quaternion(info.Rotation.X, info.Rotation.Y, info.Rotation.Z, info.Rotation.W);
 
-                    lwoObject.transform.position = new Vector3(template.Position.X, template.Position.Y, template.Position.Z);
-                    lwoObject.transform.rotation = new Quaternion(template.Rotation.X, template.Rotation.Y, template.Rotation.Z, template.Rotation.W);
+                    if (info.LegoInfo.TryGetValue("renderDisabled", out var renderDisabled) &&
+                        (bool) renderDisabled)
+                    /*if (info.LegoInfo.TryGetValue("loadOnClientOnly", out var loadOnClientOnly) &&
+                        (bool) loadOnClientOnly ||
+                        info.LegoInfo.TryGetValue("loadSrvrOnly", out var loadSrvrOnly) && (bool) loadSrvrOnly ||
+                        info.LegoInfo.TryGetValue("trigger_id", out var triggerId))*/
+                    {
+                        var temp = details.GetComponentInChildren<GameTemplate>();
+
+                        if (temp != null)
+                        {
+                            temp.gameObject.SetActive(false);
+                        }
+                    }
                 }
             }
 
+            var map = new List<(Transform, Vector3, Quaternion)>();
+            
+            var zoneScale = zoneInstance.transform.localScale;
+            zoneScale.z *= -1;
+            zoneInstance.transform.localScale = zoneScale;
+
+            foreach (var sceneDetails in zoneDetails.GetComponentsInChildren<SceneDetails>())
+            {
+                var objects = sceneDetails.GetComponentsInChildren<ObjectDetails>().Where(o => !o.IsSpawned).ToArray();
+                
+                foreach (var obj in objects)
+                {
+                    var root = obj.transform;
+
+                    var position = root.position;
+                    var rotation = root.rotation;
+                    
+                    map.Add((root, position, rotation));
+                }
+            }
+            
+            zoneScale = zoneInstance.transform.localScale;
+            zoneScale.z *= -1;
+            zoneInstance.transform.localScale = zoneScale;
+            
+            foreach (var (transform, vector3, quaternion) in map)
+            {
+                transform.SetPositionAndRotation(vector3, quaternion);
+                
+                var objectScale = transform.localScale;
+                objectScale.z *= -1;
+                transform.localScale = objectScale;
+                
+                var position = transform.position;
+                var rotation = transform.rotation;
+                
+                transform.SetPositionAndRotation(position, rotation);
+            }
+            
             return zoneInstance;
+        }
+        
+        public static ObjectDetails ImportTemplate(Transform scene, int lot, string objectName)
+        {
+            try
+            {
+                var template = ObjectInterface.Import(lot, out var error);
+
+                if (template == null)
+                {
+                    Debug.LogError(error);
+                }
+
+                var zoneObject = new GameObject(objectName);
+
+                var objectDetails = zoneObject.AddOrGetComponent<ObjectDetails>();
+
+                objectDetails.Lot = lot;
+
+                zoneObject.transform.parent = scene.transform;
+
+                template.transform.parent = zoneObject.transform;
+
+                return objectDetails;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+
+                var zoneObject = new GameObject(objectName);
+                
+                var template = new GameObject("Failed to load");
+
+                var objectDetails = zoneObject.AddComponent<ObjectDetails>();
+                
+                objectDetails.Lot = lot;
+
+                zoneObject.transform.parent = scene.transform;
+
+                template.transform.parent = zoneObject.transform;
+
+                return objectDetails;
+            }
         }
         
         public void Export()

@@ -1,6 +1,7 @@
+using System;
 using System.IO;
 using DeathBlow.Components.Editors;
-using InfectedRose.Database.Concepts;
+ 
 using InfectedRose.Nif;
 using RakDotNet.IO;
 using UnityEditor;
@@ -156,37 +157,57 @@ namespace DeathBlow.Components.Game
                 }
                 else
                 {
-                    Debug.Log($"Unknown render file {renderAsset} format");
+                    Debug.LogError($"Unknown render file {renderAsset} format");
+                    
+                    return;
+                }
+
+                if (stream == null)
+                {
+                    Debug.LogError($"Failed to find render asset: {renderAsset}");
                     
                     return;
                 }
                 
-                if (stream == null) throw new FileNotFoundException($"{renderAsset}");
-                
                 using var reader = new BitReader(stream);
+                GameObject root = null;
                 
-                var nif = new NiFile();
-                nif.Deserialize(reader);
-                nif.ReadBlocks(reader);
-                
-                var constructor = new ModelConstructor();
-                
-                constructor.NifPath = directory;
-                constructor.File = nif;
-                constructor.Name = Path.GetFileNameWithoutExtension(renderAsset);
-                constructor.CreatePrefab = true;
-                constructor.PrefabPath = Path.Combine(
-                                WorkspaceControl.CurrentWorkspace.AssetModelsPath,
-                                constructor.Name
-                );
-                
-                var root = constructor.Construct();
+                try
+                {
+                    var nif = new NiFile();
+                    nif.Deserialize(reader);
+                    nif.ReadBlocks(reader);
+                    
+                    var constructor = new ModelConstructor();
+                    
+                    constructor.NifPath = directory;
+                    constructor.File = nif;
+                    constructor.Name = Path.GetFileNameWithoutExtension(renderAsset);
+                    constructor.CreatePrefab = true;
+                    constructor.PrefabPath = Path.Combine(
+                                    WorkspaceControl.CurrentWorkspace.AssetModelsPath,
+                                    constructor.Name
+                    );
+                    
+                    root = constructor.Construct();
 
-                root.transform.parent = transform;
+                    root.transform.parent = transform;
 
-                root.transform.localPosition = Vector3.zero;
+                    root.transform.localPosition = Vector3.zero;
 
-                _renderGameObject = root;
+                    _renderGameObject = root;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+                finally
+                {
+                    if (root != null)
+                    {
+                        DestroyImmediate(root);
+                    }
+                }
                 
                 stream.Dispose();
             }

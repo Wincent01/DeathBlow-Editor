@@ -11,7 +11,7 @@ public class SceneDetailsEditor : Editor
         {
             TemplateSelector.Initialize();
 
-            TemplateSelector.Scene = ((SceneDetails) serializedObject.targetObject).gameObject;
+            TemplateSelector.Scene = ((SceneDetails) serializedObject.targetObject);
         }
 
         base.OnInspectorGUI();

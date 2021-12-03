@@ -1,5 +1,5 @@
 using System.Reflection;
-using InfectedRose.Database.Concepts;
+ 
 using UnityEngine;
 
 namespace DeathBlow.Components.Game
@@ -13,8 +13,9 @@ namespace DeathBlow.Components.Game
         {
         }
 
-        public virtual void Save(LwoObject lwo)
+        public virtual void Save()
         {
+            /*
             var componentAttribute = GetType().GetCustomAttribute<GameComponentAttribute>();
             
             if (componentAttribute == null) return;
@@ -31,6 +32,7 @@ namespace DeathBlow.Components.Game
 
                 lwoComponent.Row[attribute.Name].Value = field.GetValue(this);
             }
+            */
         }
 
         public virtual void OnDetailGizmos(ObjectDetails details)

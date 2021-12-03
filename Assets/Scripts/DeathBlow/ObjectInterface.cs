@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using DeathBlow.Components;
 using DeathBlow.Components.Game;
-using InfectedRose.Database.Concepts;
+ 
 using InfectedRose.Database.Fdb;
 using InfectedRose.Database.Generic;
 using NUnit.Framework;
@@ -97,31 +97,33 @@ namespace DeathBlow
 
                 return instance;
             }
-            
-            var template = WorkspaceControl.Database.LoadObject(lot);
 
-            if (template == null)
+            var foundObject = WorkspaceControl.Database["Objects"].Seek(lot, out var template);
+
+            if (!foundObject)
             {
                 error = $"Failed to find object with template {lot}";
                 
                 return null;
             }
 
-            var templateName = template.Row.Value<string>("name");
+            var templateName = template.Value<string>("name");
             
             instance = new GameObject(templateName);
 
             var templateComponent = instance.AddComponent<GameTemplate>();
 
-            templateComponent.Lot = template.Row.Key;
+            templateComponent.Lot = template.Key;
             
             var gameComponents = new List<GameComponent>();
             
-            foreach (var component in template)
+            foreach (var component in WorkspaceControl.Database["ComponentsRegistry"].SeekMultiple(lot))
             {
-                if (!WorkspaceControl.ComponentRegistry.TryGetValue(component.Id, out var type))
+                var id = (ComponentId) component.Value<int>("component_type");
+                
+                if (!WorkspaceControl.ComponentRegistry.TryGetValue(id, out var type))
                 {
-                    error = $"Failed to find game component type with id {component.Id}";
+                    error = $"Failed to find game component type with id {id}";
 
                     Debug.LogError(error);
 
@@ -142,7 +144,7 @@ namespace DeathBlow
 
                 if (table != null)
                 {
-                    if (table.Seek((int) component.Entry[2].Value, out var row))
+                    if (table.Seek(component.Value<int>("component_id"), out var row))
                     {
                         foreach (var field in type.GetFields())
                         {

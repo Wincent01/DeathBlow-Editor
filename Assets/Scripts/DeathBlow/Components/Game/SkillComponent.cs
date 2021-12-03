@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InfectedRose.Database.Concepts;
+ 
 using InfectedRose.Database.Generic;
 using UnityEngine;
 
@@ -45,7 +45,8 @@ namespace DeathBlow.Components.Game
             }
         }
 
-        public override void Save(LwoObject lwo)
+        /*
+        public override void Save()
         {
             base.Save(lwo);
 
@@ -67,5 +68,6 @@ namespace DeathBlow.Components.Game
                 entry["AICombatWeight"].Value = skill._aiCombatWeight;
             }
         }
+        */
     }
 }

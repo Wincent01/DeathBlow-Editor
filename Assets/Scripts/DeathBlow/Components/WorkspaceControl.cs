@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -7,9 +8,10 @@ using System.Threading.Tasks;
 using DeathBlow.Components.Game;
 using DeathBlow.Workspace;
 using InfectedRose.Database;
-using InfectedRose.Database.Concepts;
+ 
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace DeathBlow.Components
 {
@@ -172,6 +174,10 @@ namespace DeathBlow.Components
                 try
                 {
                     var oldFile = Path.Combine(Path.GetDirectoryName(CurrentWorkspace.Database)!, "cdclient_old.fdb");
+                    
+                    var stopwatch = new Stopwatch();
+                    
+                    stopwatch.Start();
 
                     if (File.Exists(oldFile))
                     {
@@ -181,6 +187,8 @@ namespace DeathBlow.Components
                     {
                         Database = await AccessDatabase.OpenAsync(CurrentWorkspace.Database);
                     }
+                    
+                    Debug.Log($"Deserialized raw in {stopwatch.ElapsedMilliseconds}ms");
                 }
                 catch (Exception e)
                 {

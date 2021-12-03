@@ -1,4 +1,4 @@
-using InfectedRose.Database.Concepts;
+ 
 using UnityEditor;
 using UnityEngine;
 
@@ -44,6 +44,7 @@ namespace DeathBlow.Components.Game
 
         public void Save()
         {
+            /*
             if (!WorkspaceControl.Ok) return;
             
             var database = WorkspaceControl.Database;
@@ -62,6 +63,7 @@ namespace DeathBlow.Components.Game
                 
                 gameComponent.Save(lwo);
             }
+            */
         }
     }
 }

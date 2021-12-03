@@ -1,42 +1,33 @@
-Shader "Custom/VertexColor"
-{
-    SubShader
-    {
-        Pass
-        {
-            LOD 200
+// Upgrade NOTE: replaced 'SeperateSpecular' with 'SeparateSpecular'
 
-            CGPROGRAM
-#pragma vertex vert
-            #pragma fragment frag
-
-            struct VertexInput
-            {
-                float4 v : POSITION;
-                float4 color: COLOR;
-            };
-
-            struct VertexOutput
-            {
-                float4 pos : SV_POSITION;
-                float4 col : COLOR;
-            };
-
-            VertexOutput vert(VertexInput v)
-            {
-                VertexOutput o;
-                o.pos = UnityObjectToClipPos(v.v);
-                o.col = v.color;
-
-                return o;
-            }
-
-            float4 frag(VertexOutput o) : COLOR
-            {
-                return o.col;
-            }
-            ENDCG
+Shader " Vertex Colored" {
+Properties {
+    _Color ("Main Color", Color) = (1,1,1,1)
+    _SpecColor ("Spec Color", Color) = (1,1,1,1)
+    _Emission ("Emmisive Color", Color) = (0,0,0,0)
+    _Shininess ("Shininess", Range (0.01, 1)) = 0.7
+    _MainTex ("Base (RGB)", 2D) = "white" {}
+}
+ 
+SubShader {
+    Pass {
+        Material {
+            Shininess [_Shininess]
+            Specular [_SpecColor]
+            Emission [_Emission]    
         }
+        ColorMaterial AmbientAndDiffuse
+        Lighting On
+        SeparateSpecular On
+        SetTexture [_MainTex] {
+            Combine texture * primary, texture * primary
+        }
+        SetTexture [_MainTex] {
+            constantColor [_Color]
+            Combine previous * constant DOUBLE, previous * constant
+        } 
     }
-
+}
+ 
+Fallback " VertexLit", 1
 }

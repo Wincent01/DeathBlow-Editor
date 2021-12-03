@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using InfectedRose.Database.Concepts.Tables;
 using UnityEditor;
 using UnityEngine;
 
@@ -86,6 +85,7 @@ namespace DeathBlow.Components.Behaviors
 
         public void Save()
         {
+            /*
             var skillBehaviorTable = WorkspaceControl.Database["SkillBehavior"];
             var behaviorParameterTable = WorkspaceControl.Database["BehaviorParameter"];
 
@@ -136,10 +136,12 @@ namespace DeathBlow.Components.Behaviors
                     }
                 }
             }
+            */
         }
 
         public void SaveIDs(Dictionary<BehaviorDetails, int> map, BehaviorDetails start)
         {
+            /*
             if (map.ContainsKey(start))
             {
                 return;
@@ -161,6 +163,7 @@ namespace DeathBlow.Components.Behaviors
             {
                 SaveIDs(map, parameter.Action);
             }
+            */
         }
     }
 }

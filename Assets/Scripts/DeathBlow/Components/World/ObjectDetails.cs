@@ -40,15 +40,34 @@ public class ObjectDetailsEditor : Editor
         {
             GUILayout.Label("No template child object found.");
         }
+        
+        var templateFoldoutTemplate = serializedObject.FindProperty("_templateFoldout");
+        templateFoldoutTemplate.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(
+            templateFoldoutTemplate.boolValue,
+            "Template details"
+        );
+        if (templateFoldoutTemplate.boolValue)
+        {
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.ObjectField("Template", template, template.GetType());
+            var showTemplateProperty = serializedObject.FindProperty("_showTemplate");
+            EditorGUI.EndDisabledGroup();
+            var showTemplateChanged = false;
+            if (GUILayout.Button(showTemplateProperty.boolValue ? "Hide" : "Show"))
+            {
+                showTemplateProperty.boolValue = !showTemplateProperty.boolValue;
+                showTemplateChanged = true;
 
-        EditorGUI.BeginDisabledGroup(true);
-        EditorGUILayout.ObjectField("Template", template, template.GetType());
-        EditorGUI.EndDisabledGroup();
+                objectDetails.UpdateChildSelection(showTemplateProperty.boolValue);
+            }
+        }
+        EditorGUILayout.EndFoldoutHeaderGroup();
 
         if (objectDetails.IsSpawned)
         {
             GUILayout.Space(3);
-            GUILayout.Label("This object is a spawn template!");
+            // Create a label in big yellow text
+            GUILayout.Label("This object is a spawn template!", EditorStyles.boldLabel);
             GUILayout.Space(3);
         }
 
@@ -146,6 +165,8 @@ public class UnityObjectReferenceEntry
     public Object Reference;
 }
 
+[SelectionBase]
+[AddComponentMenu("Death Blow/World/Object Details")]
 public class ObjectDetails : MonoBehaviour
 {
     [SerializeField] private List<ObjectDataEntry> _data = new List<ObjectDataEntry>();
@@ -156,7 +177,11 @@ public class ObjectDetails : MonoBehaviour
 
     [HideInInspector] [SerializeField] private bool _isSpawned;
 
-    [HideInInspector] [SerializeField] private List<UnityObjectReferenceEntry> _unityObjectReferences;
+    [HideInInspector] [SerializeField] private List<UnityObjectReferenceEntry> _unityObjectReferences = new List<UnityObjectReferenceEntry>();
+
+    [HideInInspector] [SerializeField] private bool _showTemplate;
+    
+    [HideInInspector] [SerializeField] private bool _templateFoldout;
 
     public List<ObjectDataEntry> Data { get => _data; set => _data = value; }
 
@@ -165,6 +190,8 @@ public class ObjectDetails : MonoBehaviour
     public GameObject SpawnerTemplate { get => _spawnerTemplate; set => _spawnerTemplate = value; }
 
     public bool IsSpawned { get => _isSpawned; set => _isSpawned = value; }
+
+    public bool ShowTemplate { get => _showTemplate; set => _showTemplate = value; }
 
     public List<UnityObjectReferenceEntry> UnityObjectReferences
     {
@@ -190,9 +217,39 @@ public class ObjectDetails : MonoBehaviour
 
     public void OnDrawGizmos()
     {
+        UpdateChildSelection(_showTemplate);
+
         foreach (var gameComponent in GetComponentsInChildren<GameComponent>())
         {
             gameComponent.OnDetailGizmos(this);
+        }
+    }
+
+    public void UpdateChildSelection(bool value)
+    {
+        var template = GetComponentInChildren<GameTemplate>();
+
+        if (template != null)
+        {
+            // If show template is false, hide the template object in the hierarchy
+            if (!value)
+            {
+                template.gameObject.hideFlags = HideFlags.HideInHierarchy;
+
+                if (Selection.activeGameObject != null)
+                {
+                    GameObject target = Selection.activeGameObject;
+
+                    if (Selection.activeGameObject.transform.IsChildOf(template.transform) || Selection.activeGameObject == template.gameObject)
+                    {
+                        Selection.activeGameObject = gameObject;
+                    }
+                }
+            }
+            else
+            {
+                template.gameObject.hideFlags = HideFlags.None;
+            }
         }
     }
 

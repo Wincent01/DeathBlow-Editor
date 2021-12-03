@@ -9,7 +9,6 @@ using System.Linq;
 using DeathBlow.Components;
 using System.IO;
 using RakDotNet.IO;
-using InfectedRose.Database.Concepts.Tables;
 
 [CustomEditor(typeof(ZoneDetails))]
 public class ZoneDetailsEditor : Editor
@@ -363,6 +362,7 @@ public class ZoneDetails : MonoBehaviour
 
         var zoneID = (int) _zoneId;
 
+        /*
         var zoneEntry = new ZoneTableTable(zoneTable.FirstOrDefault(z => z.Key == zoneID) ?? zoneTable.Create(_zoneId));
 
         zoneEntry.zoneName = Path.Combine("death_blow/", nameNormalized + "/", $"{nameNormalized}.luz");
@@ -378,6 +378,7 @@ public class ZoneDetails : MonoBehaviour
         zoneEntry.PlayerLoseCoinsOnDeath = true;
         zoneEntry.disableSaveLoc = true;
         zoneEntry.scriptID = -1;
+        */
 
         Debug.Log("Finished export.");
     }

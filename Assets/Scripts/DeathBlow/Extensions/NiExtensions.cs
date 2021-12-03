@@ -14,6 +14,12 @@ namespace DeathBlow
     
         public static UVector3 ToEulerAngles(this Matrix33 matrix3X3)
         {
+            var x = Mathf.Atan2(matrix3X3.m32, matrix3X3.m33);
+            var y = Mathf.Atan2(-matrix3X3.m31, Mathf.Sqrt(matrix3X3.m32 * matrix3X3.m32 + matrix3X3.m33 * matrix3X3.m33));
+            var z = Mathf.Atan2(matrix3X3.m21, matrix3X3.m11);
+            return new UVector3(x, y, z);
+ 
+            /*
             var sy = Mathf.Sqrt(Mathf.Pow(matrix3X3.m11, 2) + Mathf.Pow(matrix3X3.m21, 2));
 
             var singular = sy < 1e-6;
@@ -39,6 +45,7 @@ namespace DeathBlow
             }
 
             return angles * 180;
+            */
         }
 
         public static T AddOrGetComponent<T>(this GameObject @this) where T : Component

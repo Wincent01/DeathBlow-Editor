@@ -12,7 +12,7 @@ public class TemplateSelector : EditorWindow
 
     private List<Result> Results { get; set; } = new List<Result>();
 
-    public static GameObject Scene { get; set; }
+    public static SceneDetails Scene { get; set; }
     
     public int StartIndex { get; set; }
     
@@ -44,15 +44,17 @@ public class TemplateSelector : EditorWindow
 
         GUILayout.Label("Scene:");
 
-        Scene = (GameObject)EditorGUILayout.ObjectField(
+        Scene = (SceneDetails)EditorGUILayout.ObjectField(
                         Scene,
-                        typeof(GameObject),
+                        typeof(SceneDetails),
                         true
         );
 
         if (Scene == null)
         {
             GUILayout.Label("No scene selected.");
+
+            Scene = FindObjectOfType<SceneDetails>();
 
             return;
         }

@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2103309970056189112
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2103309970056189115}
+  - component: {fileID: 2103309970056189114}
+  m_Layer: 0
+  m_Name: TacArc
+  m_TagString: Untagged
+  m_Icon: {fileID: 419385456094870383, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2103309970056189115
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103309970056189112}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2103309970056189114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103309970056189112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f225db923e746849461f686cc67b737, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _template: 2
+  _effectId: 0
+  _effectHandle: 
+  _parameters:
+  - _name: action
+    _value: 0
+    _action: {fileID: 0}
+  - _name: max range
+    _value: 10
+    _action: {fileID: 0}
+  - _name: min range
+    _value: 0
+    _action: {fileID: 0}
+  - _name: max targets
+    _value: 1
+    _action: {fileID: 0}
+  - _name: angle
+    _value: 45
+    _action: {fileID: 0}
+  - _name: target_enemy
+    _value: 1
+    _action: {fileID: 0}
+  - _name: angle_weight
+    _value: 0
+    _action: {fileID: 0}
+  - _name: check_env
+    _value: 0
+    _action: {fileID: 0}
+  - _name: distance_weight
+    _value: 0
+    _action: {fileID: 0}
+  - _name: height
+    _value: 2.2
+    _action: {fileID: 0}
+  - _name: lower_bound
+    _value: -0.5
+    _action: {fileID: 0}
+  - _name: method
+    _value: 0
+    _action: {fileID: 0}
+  - _name: offset_x
+    _value: 0
+    _action: {fileID: 0}
+  - _name: offset_y
+    _value: 0
+    _action: {fileID: 0}
+  - _name: offset_z
+    _value: 0
+    _action: {fileID: 0}
+  - _name: target_friend
+    _value: 0
+    _action: {fileID: 0}
+  - _name: target_self
+    _value: 0
+    _action: {fileID: 0}
+  - _name: target_team
+    _value: 0
+    _action: {fileID: 0}
+  - _name: upper_bound
+    _value: 15
+    _action: {fileID: 0}
+  - _name: use_attack_priority
+    _value: 1
+    _action: {fileID: 0}
+  - _name: use_picked_target
+    _value: 0
+    _action: {fileID: 0}
+  - _name: use_target_position
+    _value: 0
+    _action: {fileID: 0}
